@@ -2,6 +2,7 @@ import 'reflect-metadata';
 // Preload iconv-lite encodings to avoid rare "Cannot find module '../encodings'" errors
 // that can occur when raw-body/body-parser triggers a lazy require in certain environments.
 import 'iconv-lite/encodings';
+import * as nodeCrypto from 'crypto';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
@@ -12,6 +13,15 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import * as express from 'express';
 import { join } from 'path';
+
+// Some environments do not expose a global `crypto` object by default. Ensure it exists.
+// This is required by some dependencies (e.g., @nestjs/schedule) which call `crypto.randomUUID()`.
+if (
+  typeof (globalThis as any).crypto === 'undefined' ||
+  typeof (globalThis as any).crypto.randomUUID !== 'function'
+) {
+  (globalThis as any).crypto = nodeCrypto as any;
+}
 
 async function bootstrap() {
   // Enable rawBody for Stripe webhooks verification (available at /api/webhooks/stripe)
