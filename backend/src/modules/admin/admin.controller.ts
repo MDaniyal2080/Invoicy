@@ -110,7 +110,12 @@ export class AdminController {
   ) {
     const to = body?.to?.trim();
     if (!to) throw new BadRequestException('Recipient email (to) is required');
-    return this.emailService.sendTestEmail(to, body?.overrides || {});
+    try {
+      return await this.emailService.sendTestEmail(to, body?.overrides || {});
+    } catch (e: any) {
+      // Surface underlying provider error to the admin UI
+      throw new BadRequestException(e?.message || 'Failed to send test email');
+    }
   }
 
   @Post('settings/test-invoice-email')
@@ -119,7 +124,17 @@ export class AdminController {
   ) {
     const to = body?.to?.trim();
     if (!to) throw new BadRequestException('Recipient email (to) is required');
-    return this.emailService.sendTestInvoiceEmail(to, body?.overrides || {});
+    try {
+      return await this.emailService.sendTestInvoiceEmail(
+        to,
+        body?.overrides || {},
+      );
+    } catch (e: any) {
+      // Surface underlying provider error to the admin UI
+      throw new BadRequestException(
+        e?.message || 'Failed to send test invoice email',
+      );
+    }
   }
 
   @Get('settings/email-preview')
