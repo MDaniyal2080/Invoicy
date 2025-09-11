@@ -356,14 +356,17 @@ export class AuthService {
       },
     });
 
-    // Send verification email (non-blocking)
-    try {
-      await this.emailService.sendEmailVerification(user, verificationToken);
-    } catch (e) {
-      console.error('Failed to send verification email:', e);
-      throw new BadRequestException('Failed to send verification email');
-    }
+    // Send verification email in the background and don't block the HTTP response
+    void (async () => {
+      try {
+        await this.emailService.sendEmailVerification(user, verificationToken);
+      } catch (e) {
+        console.error('Failed to send verification email (background):', e);
+        // Optionally persist to an error log table if available
+      }
+    })();
 
-    return { message: 'Verification email sent' };
+    // Return immediately to avoid client timeouts; email will arrive shortly
+    return { message: 'Verification email queued' };
   }
 }
