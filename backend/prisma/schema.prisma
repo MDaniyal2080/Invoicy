@@ -1,0 +1,427 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// User Model
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  password          String
+  firstName         String
+  lastName          String
+  companyName       String?
+  companyLogo       String?
+  companyAddress    String?
+  companyPhone      String?
+  companyEmail      String?
+  taxNumber         String?
+  role              UserRole  @default(USER)
+  isActive          Boolean   @default(true)
+  emailVerified     Boolean   @default(false)
+  verificationToken String?
+  verificationTokenExpiry DateTime?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  
+  // Business Settings
+  invoicePrefix     String    @default("INV")
+  invoiceStartNumber Int      @default(1000)
+  currency          String    @default("USD")
+  taxRate           Float     @default(0)
+  paymentTerms      Int       @default(30) // days
+  invoiceNotes      String?
+  invoiceFooter     String?
+  
+  // Notification Preferences
+  emailNotificationsEnabled Boolean @default(true)
+  emailNotifyNewInvoice     Boolean @default(true)
+  emailNotifyPaymentReceived Boolean @default(true)
+  emailNotifyInvoiceOverdue Boolean @default(true)
+  emailNotifyWeeklySummary  Boolean @default(false)
+  emailNotifyNewClientAdded Boolean @default(true)
+  
+  // Subscription (for SaaS model)
+  subscriptionPlan  Plan      @default(FREE)
+  subscriptionEnd   DateTime?
+  invoiceLimit      Int       @default(5)
+  
+  // Payments Integrations
+  stripeCustomerId        String?
+  stripeConnectAccountId  String?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  lastLogin         DateTime?
+  
+  invoices          Invoice[]
+  clients           Client[]
+  activityLogs      ActivityLog[]
+  recurringInvoices RecurringInvoice[]
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum Plan {
+  FREE
+  BASIC
+  PREMIUM
+  ENTERPRISE
+}
+
+// Client Model
+model Client {
+  id              String    @id @default(cuid())
+  userId          String
+  
+  // Client Information
+  clientType      ClientType @default(INDIVIDUAL)
+  name            String
+  email           String
+  phone           String?
+  companyName     String?
+  taxNumber       String?
+  
+  // Address
+  addressLine1    String?
+  addressLine2    String?
+  city            String?
+  state           String?
+  country         String?
+  postalCode      String?
+  
+  // Additional Info
+  notes           String?
+  isActive        Boolean   @default(true)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices        Invoice[]
+  recurringInvoices RecurringInvoice[]
+  
+  @@unique([userId, email])
+  @@index([userId])
+}
+
+enum ClientType {
+  INDIVIDUAL
+  COMPANY
+}
+
+// Invoice Model
+model Invoice {
+  id              String    @id @default(cuid())
+  userId          String
+  clientId        String
+  
+  // Invoice Details
+  invoiceNumber   String
+  invoiceDate     DateTime  @default(now())
+  dueDate         DateTime
+  status          InvoiceStatus @default(DRAFT)
+  
+  // Financial
+  subtotal        Float
+  taxRate         Float     @default(0)
+  taxAmount       Float     @default(0)
+  discount        Float     @default(0)
+  discountType    DiscountType @default(FIXED)
+  totalAmount     Float
+  paidAmount      Float     @default(0)
+  balanceDue      Float
+  currency        String    @default("USD")
+  
+  // Additional Info
+  notes           String?
+  terms           String?
+  footer          String?
+  
+  // Tracking
+  sentAt          DateTime?
+  viewedAt        DateTime?
+  paidAt          DateTime?
+  cancelledAt     DateTime?
+  
+  // Public Access
+  shareId         String    @unique @default(cuid())
+  shareEnabled    Boolean   @default(true)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client          Client    @relation(fields: [clientId], references: [id])
+  items           InvoiceItem[]
+  payments        Payment[]
+  history         InvoiceHistory[]
+  
+  @@unique([userId, invoiceNumber])
+  @@index([userId])
+  @@index([clientId])
+  @@index([status])
+  @@index([shareId])
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  VIEWED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum DiscountType {
+  FIXED
+  PERCENTAGE
+}
+
+// InvoiceItem Model
+model InvoiceItem {
+  id              String    @id @default(cuid())
+  invoiceId       String
+  
+  // Item Details
+  description     String
+  quantity        Float
+  rate            Float
+  unit            String?   @default("unit")
+  taxable         Boolean   @default(true)
+  amount          Float
+  
+  // Order
+  order           Int       @default(0)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  invoice         Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  @@index([invoiceId])
+}
+
+// Payment Model
+model Payment {
+  id              String    @id @default(cuid())
+  invoiceId       String
+  
+  // Payment Details
+  paymentNumber   String
+  amount          Float
+  paymentDate     DateTime  @default(now())
+  paymentMethod   PaymentMethod
+  
+  // Mock Transaction Details
+  transactionId   String    @unique @default(cuid())
+  status          PaymentStatus @default(PENDING)
+  
+  // Additional Info
+  notes           String?
+  processorFee    Float     @default(0)
+  netAmount       Float
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  invoice         Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  @@index([invoiceId])
+  @@index([status])
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CREDIT_CARD
+  DEBIT_CARD
+  PAYPAL
+  STRIPE
+  CHECK
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+// InvoiceHistory Model
+model InvoiceHistory {
+  id              String    @id @default(cuid())
+  invoiceId       String
+  
+  // History Details
+  action          HistoryAction
+  description     String
+  metadata        Json?
+  performedBy     String?   // User email or system
+  
+  createdAt       DateTime  @default(now())
+  
+  invoice         Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  @@index([invoiceId])
+  @@index([action])
+}
+
+enum HistoryAction {
+  CREATED
+  UPDATED
+  SENT
+  VIEWED
+  PAYMENT_RECEIVED
+  PAYMENT_FAILED
+  REMINDER_SENT
+  STATUS_CHANGED
+  CANCELLED
+  DELETED
+  EXPORTED
+}
+
+// ActivityLog Model
+model ActivityLog {
+  id              String    @id @default(cuid())
+  userId          String
+  
+  // Log Details
+  action          String
+  entity          String    // invoice, client, payment, etc.
+  entityId        String?
+  description     String
+  ipAddress       String?
+  userAgent       String?
+  metadata        Json?
+  
+  createdAt       DateTime  @default(now())
+  
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([entity])
+  @@index([createdAt])
+}
+
+// SystemSettings Model
+model SystemSettings {
+  id              String    @id @default(cuid())
+  key             String    @unique
+  value           Json
+  description     String?
+  isPublic        Boolean   @default(false)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ErrorLog Model
+model ErrorLog {
+  id          String   @id @default(cuid())
+  level       String   @default("ERROR")
+  message     String
+  stack       String?
+  method      String?
+  path        String?
+  statusCode  Int?
+  userId      String?
+  context     Json?
+
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([statusCode])
+  @@index([level])
+}
+
+// Recurring Invoices
+
+enum RecurrenceFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum RecurringStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+model RecurringInvoice {
+  id           String   @id @default(cuid())
+  userId       String
+  clientId     String
+
+  // Template fields reused for generated invoices
+  taxRate      Float     @default(0)
+  discount     Float     @default(0)
+  discountType DiscountType @default(FIXED)
+  currency     String    @default("USD")
+  notes        String?
+  terms        String?
+  footer       String?
+  dueInDays    Int?
+
+  // Recurrence configuration
+  frequency    RecurrenceFrequency
+  interval     Int       @default(1) // every N frequency units
+  startDate    DateTime
+  endDate      DateTime?
+  nextRunAt    DateTime
+  lastRunAt    DateTime?
+  maxOccurrences  Int?
+  occurrencesCount Int   @default(0)
+  status       RecurringStatus @default(ACTIVE)
+  autoSend     Boolean  @default(false)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client       Client   @relation(fields: [clientId], references: [id])
+  items        RecurringInvoiceItem[]
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([status])
+  @@index([nextRunAt])
+}
+
+model RecurringInvoiceItem {
+  id                 String   @id @default(cuid())
+  recurringInvoiceId String
+
+  description  String
+  quantity     Float
+  rate         Float
+  unit         String?  @default("unit")
+  taxable      Boolean  @default(true)
+  amount       Float
+  order        Int      @default(0)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  recurringInvoice RecurringInvoice @relation(fields: [recurringInvoiceId], references: [id], onDelete: Cascade)
+
+  @@index([recurringInvoiceId])
+}

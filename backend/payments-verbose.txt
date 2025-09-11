@@ -1,0 +1,55 @@
+﻿  console.error
+    Failed to send payment received email (create): Error: SMTP failure
+        at Object.<anonymous> (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\src\modules\payments\payments.service.spec.ts:146:56)
+        at Promise.then.completed (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\utils.js:298:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\utils.js:231:10)
+        at _callCircusTest (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\run.js:316:40)
+        at _runTest (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\run.js:252:3)
+        at _runTestsForDescribeBlock (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\run.js:126:9)
+        at _runTestsForDescribeBlock (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\run.js:121:9)
+        at _runTestsForDescribeBlock (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\run.js:121:9)
+        at run (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\run.js:71:3)
+        at runAndTransformResultsToJestFormat (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+        at jestAdapter (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+        at runTestInternal (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-runner\build\runTest.js:367:16)
+        at runTest (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-runner\build\runTest.js:444:34)
+
+    [0m [90m 104 |[39m         )[33m;[39m
+     [90m 105 |[39m       } [36mcatch[39m (err) {
+    [31m[1m>[22m[39m[90m 106 |[39m         console[33m.[39merror([32m'Failed to send payment received email (create):'[39m[33m,[39m err)[33m;[39m
+     [90m     |[39m                 [31m[1m^[22m[39m
+     [90m 107 |[39m       }
+     [90m 108 |[39m     }
+     [90m 109 |[39m[0m
+
+      at PaymentsService.create (modules/payments/payments.service.ts:106:17)
+      at Object.<anonymous> (modules/payments/payments.service.spec.ts:149:23)
+
+  console.error
+    Failed to send payment received email (processPayment): Error: SMTP failure
+        at Object.<anonymous> (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\src\modules\payments\payments.service.spec.ts:239:56)
+        at Promise.then.completed (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\utils.js:298:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\utils.js:231:10)
+        at _callCircusTest (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\run.js:316:40)
+        at _runTest (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\run.js:252:3)
+        at _runTestsForDescribeBlock (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\run.js:126:9)
+        at _runTestsForDescribeBlock (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\run.js:121:9)
+        at _runTestsForDescribeBlock (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\run.js:121:9)
+        at run (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\run.js:71:3)
+        at runAndTransformResultsToJestFormat (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+        at jestAdapter (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+        at runTestInternal (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-runner\build\runTest.js:367:16)
+        at runTest (D:\Programming and Development\Nextjs, Nestjs and Prisma\13.Invoicy\backend\node_modules\jest-runner\build\runTest.js:444:34)
+
+    [0m [90m 248 |[39m         )[33m;[39m
+     [90m 249 |[39m       } [36mcatch[39m (err) {
+    [31m[1m>[22m[39m[90m 250 |[39m         console[33m.[39merror([32m'Failed to send payment received email (processPayment):'[39m[33m,[39m err)[33m;[39m
+     [90m     |[39m                 [31m[1m^[22m[39m
+     [90m 251 |[39m       }
+     [90m 252 |[39m     }
+     [90m 253 |[39m[0m
+
+      at PaymentsService.processPayment (modules/payments/payments.service.ts:250:17)
+
