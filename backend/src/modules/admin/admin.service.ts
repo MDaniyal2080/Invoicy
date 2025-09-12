@@ -368,6 +368,7 @@ export class AdminService {
       autoBackup: true,
       maintenanceMode: false,
       // Application configuration
+      APP_URL: process.env.APP_URL || 'http://localhost:3000',
       allowRegistration: true,
       maxUploadMB: 10,
       // Email (SMTP) defaults - editable via Admin Settings UI

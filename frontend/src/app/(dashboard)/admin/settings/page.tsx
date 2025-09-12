@@ -23,6 +23,7 @@ type SystemSettings = {
   emailNotifications: boolean
   autoBackup: boolean
   maintenanceMode: boolean
+  APP_URL: string
   // Email (SMTP)
   EMAIL_HOST: string
   EMAIL_PORT: number
@@ -327,6 +328,28 @@ export default function AdminSystemSettingsPage() {
                 <div>
                   <Label htmlFor="companyAddress">Company Address</Label>
                   <Input id="companyAddress" value={settings.companyAddress || ''} onChange={(e) => update('companyAddress', e.target.value)} placeholder="123 Main St, City, Country" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Application */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle>Application</CardTitle>
+              <CardDescription>Base URL used in email links and redirects.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="APP_URL">App Base URL</Label>
+                  <Input
+                    id="APP_URL"
+                    value={(settings as any).APP_URL || ''}
+                    onChange={(e) => update('APP_URL', e.target.value as any)}
+                    placeholder="https://app.yourdomain.com"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Include protocol (https://). Do not include a trailing path.</p>
                 </div>
               </div>
             </CardContent>
