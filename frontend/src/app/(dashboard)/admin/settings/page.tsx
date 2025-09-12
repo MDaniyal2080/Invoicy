@@ -104,7 +104,7 @@ export default function AdminSystemSettingsPage() {
       setSettings(res)
       addNotification({ type: 'success', title: 'Settings updated' })
     } catch (e: any) {
-      addNotification({ type: 'error', title: 'Update failed', message: e?.message })
+      addNotification({ type: 'error', title: 'Update failed', message: errorMessage(e) })
     } finally {
       setSaving(false)
       setLoading(false)
@@ -139,6 +139,12 @@ export default function AdminSystemSettingsPage() {
     return o
   }
 
+  // Extract readable error message from Axios/Nest responses
+  function errorMessage(e: any): string {
+    const m = (e?.response?.data?.message ?? e?.message ?? 'Unknown error') as any
+    return Array.isArray(m) ? m.join(', ') : String(m)
+  }
+
   async function handleRunBackup() {
     try {
       setRunningBackup(true)
@@ -149,7 +155,7 @@ export default function AdminSystemSettingsPage() {
         setBackupStatus(status)
       } catch {}
     } catch (e: any) {
-      addNotification({ type: 'error', title: 'Backup failed', message: e?.message })
+      addNotification({ type: 'error', title: 'Backup failed', message: errorMessage(e) })
     } finally {
       setRunningBackup(false)
     }
@@ -167,7 +173,7 @@ export default function AdminSystemSettingsPage() {
         setBackupStatus(status)
       } catch {}
     } catch (e: any) {
-      addNotification({ type: 'error', title: 'Failed to update maintenance', message: e?.message })
+      addNotification({ type: 'error', title: 'Failed to update maintenance', message: errorMessage(e) })
       // Revert on failure
       setSettings((prev) => (prev ? { ...prev, maintenanceMode: !enabled } : prev))
     }
@@ -195,7 +201,7 @@ export default function AdminSystemSettingsPage() {
         }
       }
     } catch (e: any) {
-      addNotification({ type: 'error', title: 'Failed to send test invoice email', message: e?.message })
+      addNotification({ type: 'error', title: 'Failed to send test invoice email', message: errorMessage(e) })
     } finally {
       setTestingSend(false)
     }
@@ -222,7 +228,7 @@ export default function AdminSystemSettingsPage() {
         addNotification({ type: 'error', title: 'SMTP verification failed', message: res?.error || 'Unknown error' })
       }
     } catch (e: any) {
-      addNotification({ type: 'error', title: 'SMTP verification failed', message: e?.message })
+      addNotification({ type: 'error', title: 'SMTP verification failed', message: errorMessage(e) })
     } finally {
       setTestingVerify(false)
     }
@@ -250,7 +256,7 @@ export default function AdminSystemSettingsPage() {
         }
       }
     } catch (e: any) {
-      addNotification({ type: 'error', title: 'Failed to send test email', message: e?.message })
+      addNotification({ type: 'error', title: 'Failed to send test email', message: errorMessage(e) })
     } finally {
       setTestingSend(false)
     }
@@ -262,7 +268,7 @@ export default function AdminSystemSettingsPage() {
       const res = await apiClient.previewEmailTemplate(previewType)
       setPreview(res)
     } catch (e: any) {
-      addNotification({ type: 'error', title: 'Failed to load preview', message: e?.message })
+      addNotification({ type: 'error', title: 'Failed to load preview', message: errorMessage(e) })
     } finally {
       setPreviewLoading(false)
     }

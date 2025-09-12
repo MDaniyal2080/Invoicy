@@ -1152,6 +1152,18 @@ export class EmailService {
       pass = base.pass;
     }
 
+    // If frontend sent sentinel but server has no stored password, fail early with a clear message
+    if (
+      user &&
+      !pass &&
+      Object.prototype.hasOwnProperty.call(o, 'EMAIL_PASSWORD') &&
+      o.EMAIL_PASSWORD === '__SECRET__'
+    ) {
+      throw new Error(
+        'SMTP password is not configured on the server. Enter your actual SMTP password/key instead of "__SECRET__" or save it in Settings first.',
+      );
+    }
+
     const from = (o.EMAIL_FROM ?? base.from) as string;
     const connectionTimeout = this.toNum(
       o.EMAIL_CONNECTION_TIMEOUT_MS ?? base.connectionTimeout,
@@ -1256,7 +1268,20 @@ export class EmailService {
 
     // Default to SMTP test
     const transporter = await this.buildTransporterWithOverrides(overrides);
-    const info = await transporter.sendMail({ from, to, subject, html });
-    return { success: true, messageId: info.messageId };
+    try {
+      const info = await transporter.sendMail({ from, to, subject, html });
+      return { success: true, messageId: info.messageId };
+    } catch (e: any) {
+      // Common misconfig hint for Brevo/Sendinblue when using unverified Gmail sender
+      const host = (overrides?.EMAIL_HOST || base.host) as string;
+      let msg = e?.message || 'Failed to send email via SMTP';
+      try {
+        if (/brevo|sendinblue|smtp-relay\./i.test(host) && /@gmail\.com$/i.test(from)) {
+          msg +=
+            ' Hint: Brevo requires a verified sender address. Add and verify the From address in Brevo or use a domain you own (not a Gmail address), then update EMAIL_FROM.';
+        }
+      } catch {}
+      throw new Error(msg);
+    }
   }
 }
