@@ -64,22 +64,44 @@ export class StripeService {
     if (!user) throw new NotFoundException('User not found');
     if ((user as any).stripeCustomerId) return (user as any).stripeCustomerId;
     const stripe = await this.getStripe();
-    const customer = await stripe.customers.create({
-      email: user.email,
-      name:
-        `${user.firstName || ''} ${user.lastName || ''}`.trim() || undefined,
-    });
+    // Try to find an existing customer for this email to prevent duplicates.
+    // Prefer a customer that already has a non-canceled subscription.
+    let chosenCustomerId: string | undefined;
+    try {
+      const list = await stripe.customers.list({ email: user.email, limit: 10 });
+      // Try to find a customer with an active/trialing/past_due/unpaid subscription
+      for (const c of list.data) {
+        try {
+          const subs = await stripe.subscriptions.list({ customer: c.id, status: 'all', limit: 10 });
+          const hasValid = subs.data.some((s) => s.status !== 'canceled' && s.status !== 'incomplete_expired');
+          if (hasValid) { chosenCustomerId = c.id; break; }
+        } catch {}
+      }
+      // If none have subscriptions, pick the most recently created
+      if (!chosenCustomerId && list.data.length > 0) {
+        const sorted = list.data.sort((a, b) => (b.created || 0) - (a.created || 0));
+        chosenCustomerId = sorted[0].id;
+      }
+    } catch {}
+    const customer = chosenCustomerId
+      ? await stripe.customers.retrieve(chosenCustomerId).then((c) => c as any)
+      : await stripe.customers.create({
+          email: user.email,
+          name:
+            `${user.firstName || ''} ${user.lastName || ''}`.trim() || undefined,
+        });
     const prismaAny = this.prisma as any;
     await prismaAny.user.update({
       where: { id: userId },
-      data: { stripeCustomerId: customer.id },
+      data: { stripeCustomerId: (customer as any).id },
     });
-    return customer.id;
+    return (customer as any).id;
   }
 
   async createSubscriptionCheckoutSession(
     userId: string,
     plan: 'BASIC' | 'PREMIUM',
+    force?: boolean,
   ) {
     const stripe = await this.getStripe();
     const prices = await this.getPrices();
@@ -89,6 +111,29 @@ export class StripeService {
         `Stripe price for ${plan} is not configured`,
       );
     const customer = await this.ensureStripeCustomerId(userId);
+
+    // If the customer already has a still-active subscription that is NOT set to cancel at period end,
+    // send them to the billing portal to manage/upgrade instead of creating a duplicate subscription.
+    const subs = await stripe.subscriptions.list({ customer, status: 'all', limit: 10 });
+    const hasBlocking = subs.data.some((s) => {
+      const status = s.status as string;
+      const blockingStatus = status === 'active' || status === 'trialing' || status === 'past_due' || status === 'unpaid';
+      return blockingStatus && !s.cancel_at_period_end;
+    });
+    try {
+      console.log('[Stripe] createSubscriptionCheckoutSession', {
+        userId,
+        plan,
+        subs: subs.data.map((s) => ({ id: s.id, status: s.status, cancel_at_period_end: s.cancel_at_period_end })),
+        hasBlocking,
+        force: !!force,
+      });
+    } catch {}
+    if (hasBlocking && !force) {
+      // Return billing portal URL instead of a checkout session.
+      return this.createBillingPortalSession(userId);
+    }
+
     const origin = this.getFrontendUrl();
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -101,15 +146,100 @@ export class StripeService {
     return { url: session.url };
   }
 
+  // Debug helper: return the user's Stripe subscriptions and our blocking decision
+  async debugUserSubscriptions(userId: string) {
+    const stripe = await this.getStripe();
+    const customer = await this.ensureStripeCustomerId(userId);
+    const subs = await stripe.subscriptions.list({ customer, status: 'all', limit: 20 });
+    const items = subs.data.map((s) => ({
+      id: s.id,
+      status: s.status,
+      cancel_at_period_end: s.cancel_at_period_end,
+      current_period_end: s.current_period_end,
+      created: s.created,
+      items: s.items?.data?.map((it: any) => ({ price: it.price?.id, product: it.price?.product })) || [],
+    }));
+    const hasBlocking = subs.data.some((s) => {
+      const status = s.status as string;
+      const blockingStatus = status === 'active' || status === 'trialing' || status === 'past_due' || status === 'unpaid';
+      return blockingStatus && !s.cancel_at_period_end;
+    });
+    return { customer, subscriptions: items, hasBlocking } as const;
+  }
+
   async createBillingPortalSession(userId: string) {
     const stripe = await this.getStripe();
     const customer = await this.ensureStripeCustomerId(userId);
     const origin = this.getFrontendUrl();
     const portal = await stripe.billingPortal.sessions.create({
       customer,
-      return_url: `${origin}/settings?tab=billing`,
+      return_url: `${origin}/settings?tab=billing&from=portal`,
     });
     return { url: portal.url };
+  }
+
+  // Manually sync subscription status for a user from Stripe (fallback when webhooks are delayed)
+  async syncSubscriptionForUser(userId: string) {
+    const stripe = await this.getStripe();
+    const customer = await this.ensureStripeCustomerId(userId);
+    const prices = await this.getPrices();
+    const prev = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        subscriptionPlan: true,
+        emailNotificationsEnabled: true,
+        email: true,
+        firstName: true,
+        companyName: true,
+      },
+    });
+    // Look for the most recent non-canceled subscription for this customer
+    const subs = await stripe.subscriptions.list({ customer, status: 'all', limit: 10 });
+    let plan: 'FREE' | 'BASIC' | 'PREMIUM' = 'FREE';
+    let periodEnd: Date | null = null;
+    // Prefer subscriptions that are not canceled or incomplete_expired
+    const sorted = subs.data
+      .filter((s) => s.status !== 'canceled' && s.status !== 'incomplete_expired')
+      .sort((a, b) => (b.created || 0) - (a.created || 0));
+    if (sorted.length > 0) {
+      const sub = sorted[0];
+      const item = sub.items?.data?.[0];
+      const priceId = (item as any)?.price?.id as string | undefined;
+      if (priceId && prices.BASIC && priceId === prices.BASIC) plan = 'BASIC';
+      else if (priceId && prices.PREMIUM && priceId === prices.PREMIUM) plan = 'PREMIUM';
+      periodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
+    }
+    const invoiceLimit = plan === 'FREE' ? 5 : plan === 'BASIC' ? 50 : 0;
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        subscriptionPlan: plan as any,
+        subscriptionEnd: periodEnd,
+        invoiceLimit,
+      },
+    });
+    // Fire plan upgraded email if changed to a paid plan and notifications enabled
+    try {
+      if (
+        (prev?.subscriptionPlan as any) !== (plan as any) &&
+        plan !== 'FREE' &&
+        prev?.emailNotificationsEnabled
+      ) {
+        await this.emailService.sendPlanUpgradedEmail(
+          {
+            email: prev?.email,
+            firstName: prev?.firstName,
+            companyName: prev?.companyName,
+          } as any,
+          String(plan),
+          periodEnd,
+          invoiceLimit,
+        );
+      }
+    } catch (e) {
+      console.error('Failed to send plan upgraded email (sync):', (e as any)?.message || e);
+    }
+    return { subscriptionPlan: plan, subscriptionEnd: periodEnd, invoiceLimit } as const;
   }
 
   // --- Stripe Connect for user invoice payments ---
@@ -413,14 +543,41 @@ export class StripeService {
     }
 
     const invoiceLimit = plan === 'BASIC' ? 50 : 0;
-    await this.prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id: userId },
       data: {
         subscriptionPlan: plan as any,
         subscriptionEnd: periodEnd,
         invoiceLimit,
       },
+      select: {
+        emailNotificationsEnabled: true,
+        email: true,
+        firstName: true,
+        companyName: true,
+        subscriptionPlan: true,
+        subscriptionEnd: true,
+        invoiceLimit: true,
+      },
     });
+
+    // Send plan upgraded email (best-effort)
+    try {
+      if (updated?.emailNotificationsEnabled) {
+        await this.emailService.sendPlanUpgradedEmail(
+          {
+            email: updated.email,
+            firstName: updated.firstName,
+            companyName: updated.companyName,
+          } as any,
+          String(plan),
+          periodEnd,
+          invoiceLimit,
+        );
+      }
+    } catch (e) {
+      console.error('Failed to send plan upgraded email:', (e as any)?.message || e);
+    }
   }
 
   private async onSubscriptionCanceled(customerId: string) {

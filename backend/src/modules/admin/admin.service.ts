@@ -380,6 +380,7 @@ export class AdminService {
       // Provider options
       EMAIL_PROVIDER: 'SMTP', // SMTP | SENDGRID
       SENDGRID_API_KEY: '',
+      BREVO_API_KEY: '',
       EMAIL_TRACK_OPENS: true,
       EMAIL_TRACK_CLICKS: true,
       EMAIL_CONNECTION_TIMEOUT_MS: 10000,
@@ -412,6 +413,12 @@ export class AdminService {
       current.SENDGRID_API_KEY.length > 0
     ) {
       current.SENDGRID_API_KEY = '__SECRET__';
+    }
+    if (
+      typeof current.BREVO_API_KEY === 'string' &&
+      current.BREVO_API_KEY.length > 0
+    ) {
+      current.BREVO_API_KEY = '__SECRET__';
     }
     if (
       typeof current.STRIPE_SECRET_KEY === 'string' &&
@@ -455,8 +462,8 @@ export class AdminService {
             (data?.EMAIL_PROVIDER ?? '') || '',
           ).toUpperCase();
           const host = typeof value === 'string' ? value.trim() : '';
-          if (providerInput !== 'SENDGRID') {
-            if (!host) throw new BadRequestException('EMAIL_HOST is required');
+          if (providerInput === 'SMTP') {
+            if (!host) throw new BadRequestException('EMAIL_HOST is required when EMAIL_PROVIDER=SMTP');
           }
           value = host;
           break;
@@ -478,15 +485,23 @@ export class AdminService {
         }
         case 'EMAIL_PROVIDER': {
           const provider = String(value || '').toUpperCase();
-          if (!['SMTP', 'SENDGRID'].includes(provider)) {
+          if (!['SMTP', 'SENDGRID', 'BREVO'].includes(provider)) {
             throw new BadRequestException(
-              'EMAIL_PROVIDER must be either SMTP or SENDGRID',
+              'EMAIL_PROVIDER must be one of SMTP, SENDGRID, or BREVO',
             );
           }
           value = provider;
           break;
         }
         case 'SENDGRID_API_KEY': {
+          // Support sentinel to keep existing
+          if (value === '__SECRET__') {
+            continue; // skip upsert to preserve existing secret
+          }
+          value = String(value || '').trim();
+          break;
+        }
+        case 'BREVO_API_KEY': {
           // Support sentinel to keep existing
           if (value === '__SECRET__') {
             continue; // skip upsert to preserve existing secret

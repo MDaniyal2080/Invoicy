@@ -597,14 +597,24 @@ class ApiClient {
   }
 
   // Stripe: SaaS subscription (admin-configured platform Stripe)
-  async stripeCreateSubscriptionCheckout(plan: 'BASIC' | 'PREMIUM'): Promise<{ url: string }> {
-    const response = await this.client.post('/payments/stripe/subscription/checkout', { plan })
+  async stripeCreateSubscriptionCheckout(
+    plan: 'BASIC' | 'PREMIUM',
+    opts?: { force?: boolean }
+  ): Promise<{ url: string }> {
+    const payload: any = { plan }
+    if (opts?.force) payload.force = true
+    const response = await this.client.post('/payments/stripe/subscription/checkout', payload)
     return response.data as { url: string }
   }
 
   async stripeCreateBillingPortal(): Promise<{ url: string }> {
     const response = await this.client.post('/payments/stripe/subscription/portal')
     return response.data as { url: string }
+  }
+
+  async stripeSyncSubscription(): Promise<{ subscriptionPlan: string; subscriptionEnd: string | null; invoiceLimit: number }> {
+    const response = await this.client.post('/payments/stripe/subscription/sync')
+    return response.data as { subscriptionPlan: string; subscriptionEnd: string | null; invoiceLimit: number }
   }
 
   // Stripe Connect: per-user payments for invoice collection

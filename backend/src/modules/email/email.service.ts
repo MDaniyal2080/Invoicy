@@ -44,8 +44,9 @@ export class EmailService {
     user?: string;
     pass?: string;
     from: string;
-    provider: 'SMTP' | 'SENDGRID';
+    provider: 'SMTP' | 'SENDGRID' | 'BREVO';
     sendgridApiKey?: string;
+    brevoApiKey?: string;
     trackOpens: boolean;
     trackClicks: boolean;
     connectionTimeout: number;
@@ -62,6 +63,7 @@ export class EmailService {
       'EMAIL_FROM',
       'EMAIL_PROVIDER',
       'SENDGRID_API_KEY',
+      'BREVO_API_KEY',
       'EMAIL_TRACK_OPENS',
       'EMAIL_TRACK_CLICKS',
       'EMAIL_CONNECTION_TIMEOUT_MS',
@@ -96,12 +98,16 @@ export class EmailService {
     const providerRaw = (map.get('EMAIL_PROVIDER') ??
       this.configService.get('EMAIL_PROVIDER') ??
       'SMTP') as string;
-    const provider =
-      String(providerRaw || 'SMTP').toUpperCase() === 'SENDGRID'
-        ? 'SENDGRID'
-        : 'SMTP';
+    const providerStr = String(providerRaw || 'SMTP').toUpperCase();
+    const provider = (providerStr === 'SENDGRID'
+      ? 'SENDGRID'
+      : providerStr === 'BREVO'
+      ? 'BREVO'
+      : 'SMTP') as 'SMTP' | 'SENDGRID' | 'BREVO';
     const sendgridApiKey = (map.get('SENDGRID_API_KEY') ??
       this.configService.get('SENDGRID_API_KEY')) as string | undefined;
+    const brevoApiKey = (map.get('BREVO_API_KEY') ??
+      this.configService.get('BREVO_API_KEY')) as string | undefined;
     const trackOpens = this.toBool(
       map.get('EMAIL_TRACK_OPENS') ??
         this.configService.get('EMAIL_TRACK_OPENS') ??
@@ -143,6 +149,7 @@ export class EmailService {
       from,
       provider,
       sendgridApiKey,
+      brevoApiKey,
       trackOpens,
       trackClicks,
       connectionTimeout,
@@ -154,12 +161,15 @@ export class EmailService {
 
   private async buildTransporterFromSettings(): Promise<nodemailer.Transporter> {
     const cfg = await this.loadEmailSettings();
+    const isBrevo = /brevo|sendinblue|smtp-relay\./i.test(cfg.host || '');
+    const smtpUser = cfg.user;
+    const smtpPass = isBrevo ? cfg.brevoApiKey : cfg.pass;
+
     return nodemailer.createTransport({
       host: cfg.host,
       port: cfg.port,
       secure: cfg.secure,
-      auth:
-        cfg.user && cfg.pass ? { user: cfg.user, pass: cfg.pass } : undefined,
+      auth: smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
       connectionTimeout: cfg.connectionTimeout,
       greetingTimeout: cfg.greetingTimeout,
       socketTimeout: cfg.socketTimeout,
@@ -247,6 +257,63 @@ export class EmailService {
       }
     }
 
+    if (cfg.provider === 'BREVO') {
+      try {
+        if (!cfg.brevoApiKey) {
+          throw new Error('Brevo selected but BREVO_API_KEY is not configured');
+        }
+        const fetchFn: any = (globalThis as any).fetch;
+        if (typeof fetchFn !== 'function') {
+          throw new Error('Brevo API requires Node 18+ with global fetch available');
+        }
+        const fromEmail = cfg.from;
+        const sender = (options?.fromName
+          ? { email: fromEmail, name: options.fromName }
+          : { email: fromEmail }) as any;
+
+        const brevoAttachments = (attachments || [])
+          .map((att) => {
+            const contentBase64 = Buffer.isBuffer(att.content)
+              ? att.content.toString('base64')
+              : att.content?.toString?.('base64');
+            if (!contentBase64) return null;
+            return { name: att.filename, content: contentBase64 } as any;
+          })
+          .filter(Boolean);
+
+        const body: any = {
+          sender,
+          to: [{ email: to }],
+          subject,
+          htmlContent: html,
+        };
+        if (options?.replyTo) body.replyTo = options.replyTo;
+        if (options?.headers) body.headers = options.headers;
+        if (brevoAttachments.length) body.attachment = brevoAttachments;
+
+        const res = await fetchFn('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'api-key': cfg.brevoApiKey,
+            'content-type': 'application/json',
+            accept: 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Brevo API error: ${res.status} ${res.statusText} - ${errText}`);
+        }
+        const data: any = await res.json().catch(() => ({}));
+        const messageId = data?.messageId || data?.messageID || undefined;
+        console.log('Email sent via Brevo API:', messageId || res.status);
+        return { messageId, provider: 'BREVO' } as const;
+      } catch (error) {
+        console.error('Error sending email via Brevo API:', error);
+        throw error;
+      }
+    }
+
     // Default to SMTP (nodemailer)
     const transporter = await this.buildTransporterFromSettings();
     try {
@@ -282,7 +349,8 @@ export class EmailService {
 
     const providerOverride = (overrides?.EMAIL_PROVIDER || base.provider) as
       | 'SMTP'
-      | 'SENDGRID';
+      | 'SENDGRID'
+      | 'BREVO';
     const from = (overrides?.EMAIL_FROM ?? base.from) as string;
 
     // Build sample invoice subject/html using previewTemplate for consistency
@@ -340,6 +408,51 @@ export class EmailService {
         }
         throw e;
       }
+    }
+
+    if (providerOverride === 'BREVO') {
+      let apiKey = overrides?.BREVO_API_KEY as string | undefined;
+      if (apiKey === '__SECRET__') {
+        apiKey = (base as any).brevoApiKey as string | undefined;
+      }
+      if (!apiKey) {
+        apiKey = (base as any).brevoApiKey as string | undefined;
+      }
+      if (!apiKey) {
+        throw new Error(
+          'BREVO_API_KEY is required to send test invoice email with Brevo',
+        );
+      }
+      const fetchFn: any = (globalThis as any).fetch;
+      if (typeof fetchFn !== 'function') {
+        throw new Error('Brevo API requires Node 18+ with global fetch available');
+      }
+      const sender = { email: from, name: fromName } as any;
+      const body: any = {
+        sender,
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+        replyTo,
+        headers,
+      };
+      const res = await fetchFn('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': apiKey,
+          'content-type': 'application/json',
+          accept: 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(
+          `Brevo API error: ${res.status} ${res.statusText} - ${errText}`,
+        );
+      }
+      const data: any = await res.json().catch(() => ({}));
+      return { success: true, messageId: data?.messageId };
     }
 
     // Default to SMTP test (with overrides)
@@ -1140,7 +1253,7 @@ export class EmailService {
     const secure = this.toBool(o.EMAIL_SECURE ?? base.secure, base.secure);
 
     // Username: allow explicit empty string to clear auth
-    const user = o.EMAIL_USER === '' ? undefined : (o.EMAIL_USER ?? base.user);
+    let user = o.EMAIL_USER === '' ? undefined : (o.EMAIL_USER ?? base.user);
     // Password: respect sentinel to keep existing
     let pass: string | undefined;
     if (Object.prototype.hasOwnProperty.call(o, 'EMAIL_PASSWORD')) {
@@ -1150,6 +1263,22 @@ export class EmailService {
           : o.EMAIL_PASSWORD || undefined;
     } else {
       pass = base.pass;
+    }
+
+    // Brevo (Sendinblue) support: API key as SMTP password, username = 'apikey'
+    const isBrevo = /brevo|sendinblue|smtp-relay\./i.test(host || '');
+    const brevoKeyOverride =
+      o.BREVO_API_KEY === '__SECRET__'
+        ? (base as any).brevoApiKey
+        : (o.BREVO_API_KEY as string | undefined);
+    const brevoKey = (brevoKeyOverride ?? (base as any).brevoApiKey) as
+      | string
+      | undefined;
+    if (isBrevo) {
+      // For Brevo SMTP, use API key as password if provided; username can be account email or as configured
+      if (brevoKey) {
+        pass = String(brevoKey);
+      }
     }
 
     // If frontend sent sentinel but server has no stored password, fail early with a clear message
@@ -1213,7 +1342,8 @@ export class EmailService {
 
     const providerOverride = (overrides?.EMAIL_PROVIDER || base.provider) as
       | 'SMTP'
-      | 'SENDGRID';
+      | 'SENDGRID'
+      | 'BREVO';
     const from = (overrides?.EMAIL_FROM ?? base.from) as string;
 
     const siteName = await this.getSiteName();
@@ -1264,6 +1394,47 @@ export class EmailService {
         }
         throw e;
       }
+    }
+
+    if (providerOverride === 'BREVO') {
+      let apiKey = overrides?.BREVO_API_KEY as string | undefined;
+      if (apiKey === '__SECRET__') {
+        apiKey = (base as any).brevoApiKey as string | undefined;
+      }
+      if (!apiKey) {
+        apiKey = (base as any).brevoApiKey as string | undefined;
+      }
+      if (!apiKey) {
+        throw new Error('BREVO_API_KEY is required to send test email with Brevo');
+      }
+      const fetchFn: any = (globalThis as any).fetch;
+      if (typeof fetchFn !== 'function') {
+        throw new Error('Brevo API requires Node 18+ with global fetch available');
+      }
+      const sender = { email: from, name: `${siteName} Test` } as any;
+      const body: any = {
+        sender,
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+      };
+      const res = await fetchFn('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': apiKey,
+          'content-type': 'application/json',
+          accept: 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(
+          `Brevo API error: ${res.status} ${res.statusText} - ${errText}`,
+        );
+      }
+      const data: any = await res.json().catch(() => ({}));
+      return { success: true, messageId: data?.messageId };
     }
 
     // Default to SMTP test

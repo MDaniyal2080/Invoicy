@@ -244,6 +244,45 @@ export default function SettingsPage() {
     return () => { mounted = false }
   }, [])
 
+  // Refresh billing state on return from Stripe Checkout/Portal or Connect onboarding
+  useEffect(() => {
+    try {
+      const tabParam = (searchParams.get('tab') || '').toLowerCase()
+      if (tabParam !== 'billing') return
+      const success = searchParams.get('success')
+      const canceled = searchParams.get('canceled')
+      const connect = searchParams.get('connect')
+      const from = searchParams.get('from')
+      const shouldRefresh = !!success || !!canceled || !!connect || !!from
+      if (!shouldRefresh) return
+      ;(async () => {
+        try {
+          if (success) {
+            // Attempt a manual sync from Stripe first (in case webhooks are delayed)
+            try {
+              const res = await apiClient.stripeSyncSubscription()
+              setSubscriptionPlan(res.subscriptionPlan || 'Free')
+              setSubscriptionEnd(res.subscriptionEnd || null)
+              setInvoiceLimit(typeof res.invoiceLimit === 'number' ? res.invoiceLimit : null)
+              toast.success('Subscription updated')
+            } catch {}
+          }
+          // Always re-fetch server settings for consistency
+          const settings = await apiClient.getUserSettings()
+          setSubscriptionPlan(settings.subscriptionPlan || 'Free')
+          setSubscriptionEnd(settings.subscriptionEnd || null)
+          setInvoiceLimit(typeof settings.invoiceLimit === 'number' ? settings.invoiceLimit : null)
+        } catch {}
+        try {
+          if (connect || from === 'portal') {
+            const st = await apiClient.stripeGetConnectStatus()
+            setConnectStatus(st)
+          }
+        } catch {}
+      })()
+    } catch {}
+  }, [searchParams])
+
   // Load analytics usage for billing tab (how many invoices created)
   useEffect(() => {
     let mounted = true
@@ -466,7 +505,15 @@ export default function SettingsPage() {
                     onClick={async () => {
                       try {
                         setLoadingSubs(true)
-                        const { url } = await apiClient.stripeCreateSubscriptionCheckout('BASIC')
+                        const planUpper = String(subscriptionPlan || '').toUpperCase()
+                        // If already subscribed to any plan, open billing portal instead of creating a duplicate subscription
+                        if (planUpper !== 'FREE') {
+                          toast.message('You already have a subscription. Opening Billing Portal…')
+                          const { url } = await apiClient.stripeCreateBillingPortal()
+                          if (url) window.location.href = url
+                          return
+                        }
+                        const { url } = await apiClient.stripeCreateSubscriptionCheckout('BASIC', { force: true })
                         if (url) window.location.href = url
                       } catch (err: unknown) {
                         toast.error(getErrorMessage(err, 'Failed to start Stripe checkout'))
@@ -481,7 +528,14 @@ export default function SettingsPage() {
                     onClick={async () => {
                       try {
                         setLoadingSubs(true)
-                        const { url } = await apiClient.stripeCreateSubscriptionCheckout('PREMIUM')
+                        const planUpper = String(subscriptionPlan || '').toUpperCase()
+                        if (planUpper !== 'FREE') {
+                          toast.message('You already have a subscription. Opening Billing Portal…')
+                          const { url } = await apiClient.stripeCreateBillingPortal()
+                          if (url) window.location.href = url
+                          return
+                        }
+                        const { url } = await apiClient.stripeCreateSubscriptionCheckout('PREMIUM', { force: true })
                         if (url) window.location.href = url
                       } catch (err: unknown) {
                         toast.error(getErrorMessage(err, 'Failed to start Stripe checkout'))
@@ -504,6 +558,24 @@ export default function SettingsPage() {
                     }}
                   >
                     Manage Billing (Stripe)
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={loadingSubs}
+                    onClick={async () => {
+                      try {
+                        setLoadingSubs(true)
+                        const res = await apiClient.stripeSyncSubscription()
+                        setSubscriptionPlan(res.subscriptionPlan || 'Free')
+                        setSubscriptionEnd(res.subscriptionEnd || null)
+                        setInvoiceLimit(typeof res.invoiceLimit === 'number' ? res.invoiceLimit : null)
+                        toast.success('Subscription synced')
+                      } catch (err: unknown) {
+                        toast.error(getErrorMessage(err, 'Failed to sync subscription'))
+                      } finally { setLoadingSubs(false) }
+                    }}
+                  >
+                    Sync Subscription
                   </Button>
                 </div>
               </div>

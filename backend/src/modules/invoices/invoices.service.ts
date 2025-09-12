@@ -53,11 +53,23 @@ export class InvoicesService {
       });
 
       if (user && user.subscriptionPlan !== Plan.ENTERPRISE) {
-        if (typeof user.invoiceLimit === 'number' && user.invoiceLimit > 0) {
+        // Determine effective limit from DB value or plan defaults
+        let effectiveLimit = Number.isFinite(user.invoiceLimit as any)
+          ? Number(user.invoiceLimit)
+          : NaN;
+        if (!Number.isFinite(effectiveLimit) || effectiveLimit <= 0) {
+          effectiveLimit =
+            user.subscriptionPlan === Plan.FREE
+              ? 5
+              : user.subscriptionPlan === Plan.BASIC
+              ? 50
+              : 0; // PREMIUM and higher: 0 means unlimited
+        }
+        if (effectiveLimit > 0) {
           const currentCount = await tx.invoice.count({
             where: { userId, status: { not: InvoiceStatus.CANCELLED } },
           });
-          if (currentCount >= user.invoiceLimit) {
+          if (currentCount >= effectiveLimit) {
             throw new BadRequestException(
               'Invoice limit reached for your plan',
             );
@@ -919,11 +931,22 @@ export class InvoicesService {
       });
 
       if (user && user.subscriptionPlan !== Plan.ENTERPRISE) {
-        if (typeof user.invoiceLimit === 'number' && user.invoiceLimit > 0) {
+        let effectiveLimit = Number.isFinite(user.invoiceLimit as any)
+          ? Number(user.invoiceLimit)
+          : NaN;
+        if (!Number.isFinite(effectiveLimit) || effectiveLimit <= 0) {
+          effectiveLimit =
+            user.subscriptionPlan === Plan.FREE
+              ? 5
+              : user.subscriptionPlan === Plan.BASIC
+              ? 50
+              : 0;
+        }
+        if (effectiveLimit > 0) {
           const currentCount = await tx.invoice.count({
             where: { userId, status: { not: InvoiceStatus.CANCELLED } },
           });
-          if (currentCount >= user.invoiceLimit) {
+          if (currentCount >= effectiveLimit) {
             throw new BadRequestException(
               'Invoice limit reached for your plan',
             );

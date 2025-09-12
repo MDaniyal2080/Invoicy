@@ -30,8 +30,9 @@ type SystemSettings = {
   EMAIL_USER: string
   EMAIL_PASSWORD: string
   EMAIL_FROM: string
-  EMAIL_PROVIDER: 'SMTP' | 'SENDGRID'
+  EMAIL_PROVIDER: 'SMTP' | 'SENDGRID' | 'BREVO'
   SENDGRID_API_KEY: string
+  BREVO_API_KEY: string
   EMAIL_TRACK_OPENS: boolean
   EMAIL_TRACK_CLICKS: boolean
   EMAIL_CONNECTION_TIMEOUT_MS: number
@@ -120,6 +121,7 @@ export default function AdminSystemSettingsPage() {
     const keys: (keyof SystemSettings)[] = [
       'EMAIL_PROVIDER',
       'SENDGRID_API_KEY',
+      'BREVO_API_KEY',
       'EMAIL_TRACK_OPENS',
       'EMAIL_TRACK_CLICKS',
       'EMAIL_HOST',
@@ -273,6 +275,9 @@ export default function AdminSystemSettingsPage() {
       setPreviewLoading(false)
     }
   }
+
+  // Derived flag: when SMTP Host is Brevo/Sendinblue, UI shows API key field and locks username to 'apikey'
+  const isBrevoHost = /brevo|sendinblue|smtp-relay\./i.test(String(settings?.EMAIL_HOST || ''))
 
   return (
     <div className="space-y-8">
@@ -490,6 +495,7 @@ export default function AdminSystemSettingsPage() {
                     <SelectContent>
                       <SelectItem value="SMTP">SMTP</SelectItem>
                       <SelectItem value="SENDGRID">SendGrid</SelectItem>
+                      <SelectItem value="BREVO">Brevo (API)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -521,8 +527,19 @@ export default function AdminSystemSettingsPage() {
                 </div>
               )}
 
+              {/* Brevo API Options */}
+              {settings.EMAIL_PROVIDER === 'BREVO' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                  <div>
+                    <Label htmlFor="BREVO_API_KEY">Brevo API Key</Label>
+                    <Input id="BREVO_API_KEY" type="password" value={settings.BREVO_API_KEY || ''} onChange={(e) => update('BREVO_API_KEY', e.target.value)} placeholder="xkeysib_..." />
+                    <p className="text-xs text-gray-500 mt-1">Emails will be sent via Brevo REST API over HTTPS (port 443). Enter "__SECRET__" to keep the current key unchanged.</p>
+                  </div>
+                </div>
+              )}
+
               {/* SMTP Options */}
-              {settings.EMAIL_PROVIDER !== 'SENDGRID' && (
+              {settings.EMAIL_PROVIDER === 'SMTP' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                   <div>
                     <Label htmlFor="EMAIL_HOST">SMTP Host</Label>
@@ -536,16 +553,32 @@ export default function AdminSystemSettingsPage() {
                     <input id="EMAIL_SECURE" type="checkbox" className="h-4 w-4" checked={!!settings.EMAIL_SECURE} onChange={(e) => update('EMAIL_SECURE', e.target.checked)} />
                     <Label htmlFor="EMAIL_SECURE">Use TLS/SSL (secure)</Label>
                   </div>
-                  <div>
-                    <Label htmlFor="EMAIL_USER">Username</Label>
-                    <Input id="EMAIL_USER" value={settings.EMAIL_USER || ''} onChange={(e) => update('EMAIL_USER', e.target.value)} placeholder="your@email.com" />
-                    <p className="text-xs text-gray-500 mt-1">Brevo: username is typically your account email.</p>
-                  </div>
-                  <div>
-                    <Label htmlFor="EMAIL_PASSWORD">Password</Label>
-                    <Input id="EMAIL_PASSWORD" type="password" value={settings.EMAIL_PASSWORD || ''} onChange={(e) => update('EMAIL_PASSWORD', e.target.value)} placeholder="SMTP password / key" />
-                    <p className="text-xs text-gray-500 mt-1">Brevo: use your SMTP key here. Enter "__SECRET__" to keep the current value unchanged.</p>
-                  </div>
+                  {isBrevoHost ? (
+                    <>
+                      <div>
+                        <Label htmlFor="EMAIL_USER">Username</Label>
+                        <Input id="EMAIL_USER" value={settings.EMAIL_USER || ''} onChange={(e) => update('EMAIL_USER', e.target.value)} placeholder="apikey or your@email" />
+                        <p className="text-xs text-gray-500 mt-1">Brevo SMTP usually accepts username <code className="font-mono">apikey</code> or your account email.</p>
+                      </div>
+                      <div>
+                        <Label htmlFor="BREVO_API_KEY">Brevo API Key</Label>
+                        <Input id="BREVO_API_KEY" type="password" value={settings.BREVO_API_KEY || ''} onChange={(e) => update('BREVO_API_KEY', e.target.value)} placeholder="xkeysib_..." />
+                        <p className="text-xs text-gray-500 mt-1">Used as the SMTP password. Enter "__SECRET__" to keep the current value unchanged.</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <Label htmlFor="EMAIL_USER">Username</Label>
+                        <Input id="EMAIL_USER" value={settings.EMAIL_USER || ''} onChange={(e) => update('EMAIL_USER', e.target.value)} placeholder="your@email.com" />
+                      </div>
+                      <div>
+                        <Label htmlFor="EMAIL_PASSWORD">Password</Label>
+                        <Input id="EMAIL_PASSWORD" type="password" value={settings.EMAIL_PASSWORD || ''} onChange={(e) => update('EMAIL_PASSWORD', e.target.value)} placeholder="SMTP password" />
+                        <p className="text-xs text-gray-500 mt-1">Enter "__SECRET__" to keep the existing value unchanged.</p>
+                      </div>
+                    </>
+                  )}
                   <div>
                     <Label htmlFor="EMAIL_CONNECTION_TIMEOUT_MS">Connection Timeout (ms)</Label>
                     <Input id="EMAIL_CONNECTION_TIMEOUT_MS" type="number" step="1" value={Number(settings.EMAIL_CONNECTION_TIMEOUT_MS ?? 10000)} onChange={(e) => update('EMAIL_CONNECTION_TIMEOUT_MS', parseInt(e.target.value || '0'))} />
@@ -579,9 +612,9 @@ export default function AdminSystemSettingsPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    disabled={testingVerify || saving || settings?.EMAIL_PROVIDER === 'SENDGRID'}
+                    disabled={testingVerify || saving || settings?.EMAIL_PROVIDER !== 'SMTP'}
                     onClick={handleVerifySmtp}
-                    title={settings?.EMAIL_PROVIDER === 'SENDGRID' ? 'SMTP verification is only available when provider is SMTP' : undefined}
+                    title={settings?.EMAIL_PROVIDER !== 'SMTP' ? 'SMTP verification is only available when provider is SMTP' : undefined}
                   >
                     {testingVerify ? 'Verifying…' : 'Test SMTP Connection'}
                   </Button>

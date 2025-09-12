@@ -97,7 +97,22 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    // Normalize inconsistent fields derived from plan defaults
+    const plan = (user as any).subscriptionPlan as Plan;
+    const planUpper = String(plan || '').toUpperCase();
+    const defaultLimit =
+      planUpper === 'FREE' ? 5 : planUpper === 'BASIC' ? 50 : 0; // PREMIUM/ENTERPRISE => 0 = unlimited
+    const stored = (user as any).invoiceLimit as any;
+    const storedNum = Number(stored);
+    const hasValidStored = Number.isFinite(storedNum) && storedNum > 0;
+    const effectiveLimit = defaultLimit === 0 ? 0 : hasValidStored ? storedNum : defaultLimit;
+    const effectiveEnd = planUpper === 'FREE' ? null : (user as any).subscriptionEnd;
+
+    return {
+      ...user,
+      invoiceLimit: effectiveLimit,
+      subscriptionEnd: effectiveEnd,
+    } as typeof user;
   }
 
   async updateSettings(userId: string, updateSettingsDto: UpdateSettingsDto) {

@@ -22,16 +22,23 @@ export class StripeController {
   @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
   createSubscriptionCheckout(
     @CurrentUser() user: any,
-    @Body() body: { plan?: 'BASIC' | 'PREMIUM' },
+    @Body() body: { plan?: 'BASIC' | 'PREMIUM'; force?: boolean },
   ) {
     const plan = body?.plan === 'BASIC' ? 'BASIC' : 'PREMIUM';
-    return this.stripe.createSubscriptionCheckoutSession(user.id, plan);
+    return this.stripe.createSubscriptionCheckoutSession(user.id, plan, !!body?.force);
   }
 
   @Post('payments/stripe/subscription/portal')
   @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
   createPortal(@CurrentUser() user: any) {
     return this.stripe.createBillingPortalSession(user.id);
+  }
+
+  // Manual sync of subscription state (fallback when webhook is delayed)
+  @Post('payments/stripe/subscription/sync')
+  @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
+  syncSubscription(@CurrentUser() user: any) {
+    return this.stripe.syncSubscriptionForUser(user.id);
   }
 
   // User payments: Stripe Connect onboarding/status
@@ -45,6 +52,12 @@ export class StripeController {
   @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
   getConnectStatus(@CurrentUser() user: any) {
     return this.stripe.getConnectStatus(user.id);
+  }
+
+  @Get('payments/stripe/subscription/debug')
+  @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
+  debugSubscriptions(@CurrentUser() user: any) {
+    return this.stripe.debugUserSubscriptions(user.id);
   }
 
   // Webhook endpoint (no auth)
