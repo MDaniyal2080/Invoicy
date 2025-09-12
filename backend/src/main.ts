@@ -13,6 +13,7 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import * as express from 'express';
 import { join } from 'path';
+import * as dns from 'dns';
 
 // Some environments do not expose a global `crypto` object by default. Ensure it exists.
 // This is required by some dependencies (e.g., @nestjs/schedule) which call `crypto.randomUUID()`.
@@ -24,6 +25,12 @@ if (
 }
 
 async function bootstrap() {
+  // Prefer IPv4 first to avoid IPv6 egress issues on some platforms (helps SMTP timeouts)
+  try {
+    if (typeof (dns as any).setDefaultResultOrder === 'function') {
+      dns.setDefaultResultOrder('ipv4first');
+    }
+  } catch {}
   // Enable rawBody for Stripe webhooks verification (available at /api/webhooks/stripe)
   const app = await NestFactory.create(AppModule, { rawBody: true });
   app.enableShutdownHooks();
