@@ -6,6 +6,7 @@ import { StoreProvider } from "@/components/providers/store-provider";
 import { TitleUpdater } from "@/components/providers/title-updater";
 import { NotificationToast } from "@/components/ui/notification-toast";
 import { GlobalLoading } from "@/components/ui/global-loading";
+import { MaintenanceBanner } from "@/components/ui/maintenance-banner";
 
 const geistSans = Inter({ subsets: ["latin"], variable: "--font-geist-sans" });
 const geistMono = Roboto_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
@@ -28,7 +29,7 @@ export default function RootLayout({
       >
         <Script id="theme-init" strategy="beforeInteractive">
           {`try {
-  var t = localStorage.getItem('theme') || 'system';
+  var t = localStorage.getItem('theme') || 'dark';
   var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   var useDark = t === 'dark' || (t === 'system' && prefersDark);
   var root = document.documentElement;
@@ -37,6 +38,7 @@ export default function RootLayout({
 } catch (e) { /* no-op */ }`}
         </Script>
         <StoreProvider>
+          <MaintenanceBanner />
           {children}
           <GlobalLoading />
           <NotificationToast />

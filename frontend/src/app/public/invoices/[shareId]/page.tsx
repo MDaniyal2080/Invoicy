@@ -137,7 +137,7 @@ export default function PublicInvoicePage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/30">
       {/* Header with branding */}
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200/50 dark:border-slate-700/50 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-6 py-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -163,9 +163,9 @@ export default function PublicInvoicePage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-8 animate-fade-in">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8 animate-fade-in">
         {/* Invoice Header */}
-        <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-8 shadow-xl shadow-slate-200/20 dark:shadow-slate-900/20">
+        <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 sm:p-8 shadow-xl shadow-slate-200/20 dark:shadow-slate-900/20">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
             <div className="space-y-4">
               <div className="space-y-2">
@@ -173,7 +173,7 @@ export default function PublicInvoicePage() {
                   <Hash className="w-5 h-5 text-muted-foreground" />
                   <span className="text-sm font-medium text-muted-foreground">Invoice Number</span>
                 </div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent">
                   {inv.invoiceNumber || inv.id}
                 </h1>
               </div>
@@ -266,7 +266,7 @@ export default function PublicInvoicePage() {
                   <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-1">
                     {inv.client?.name || 'Unknown Client'}
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-400 mb-3">{inv.client?.email || ''}</p>
+                  <p className="text-slate-600 dark:text-slate-400 break-words mb-3">{inv.client?.email || ''}</p>
                   {/* Address omitted because client model does not include address */}
                 </div>
               </div>
@@ -289,25 +289,25 @@ export default function PublicInvoicePage() {
                   <table className="w-full">
                     <thead className="bg-slate-50 dark:bg-slate-800/50">
                       <tr>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Description</th>
-                        <th className="px-6 py-4 text-center text-sm font-semibold text-slate-700 dark:text-slate-300">Qty</th>
-                        <th className="px-6 py-4 text-right text-sm font-semibold text-slate-700 dark:text-slate-300">Rate</th>
-                        <th className="px-6 py-4 text-right text-sm font-semibold text-slate-700 dark:text-slate-300">Amount</th>
+                        <th className="px-3 py-3 sm:px-6 sm:py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Description</th>
+                        <th className="px-3 py-3 sm:px-6 sm:py-4 text-center text-sm font-semibold text-slate-700 dark:text-slate-300">Qty</th>
+                        <th className="px-3 py-3 sm:px-6 sm:py-4 text-right text-sm font-semibold text-slate-700 dark:text-slate-300">Rate</th>
+                        <th className="px-3 py-3 sm:px-6 sm:py-4 text-right text-sm font-semibold text-slate-700 dark:text-slate-300">Amount</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-slate-900/50 divide-y divide-slate-200 dark:divide-slate-700">
                       {(inv.items || []).map((item: InvoiceItem, idx: number) => (
                         <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="font-medium text-slate-900 dark:text-slate-100">{item.description}</div>
+                          <td className="px-3 py-3 sm:px-6 sm:py-4">
+                            <div className="font-medium text-slate-900 dark:text-slate-100 break-words">{item.description}</div>
                           </td>
-                          <td className="px-6 py-4 text-center text-slate-600 dark:text-slate-400">
+                          <td className="px-3 py-3 sm:px-6 sm:py-4 text-center text-slate-600 dark:text-slate-400">
                             {item.quantity}
                           </td>
-                          <td className="px-6 py-4 text-right text-slate-600 dark:text-slate-400">
+                          <td className="px-3 py-3 sm:px-6 sm:py-4 text-right text-slate-600 dark:text-slate-400">
                             {formatCurrency(item.rate, inv.currency)}
                           </td>
-                          <td className="px-6 py-4 text-right font-semibold text-slate-900 dark:text-slate-100">
+                          <td className="px-3 py-3 sm:px-6 sm:py-4 text-right font-semibold text-slate-900 dark:text-slate-100">
                             {formatCurrency((item.quantity || 0) * (item.rate || 0), inv.currency)}
                           </td>
                         </tr>
@@ -543,13 +543,13 @@ export default function PublicInvoicePage() {
               {inv.notes && (
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Notes</h3>
-                  <p className="text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{inv.notes}</p>
+                  <p className="text-slate-600 dark:text-slate-400 whitespace-pre-wrap break-words">{inv.notes}</p>
                 </div>
               )}
               {inv.terms && (
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Terms & Conditions</h3>
-                  <p className="text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{inv.terms}</p>
+                  <p className="text-slate-600 dark:text-slate-400 whitespace-pre-wrap break-words">{inv.terms}</p>
                 </div>
               )}
             </div>

@@ -151,11 +151,11 @@ export default function AdminPage() {
   const [previewLoading, setPreviewLoading] = useState(false)
   const setGlobalSiteName = useUIStore(s => s.setSiteName)
 
-  // Redirect legacy settings tabs to the new unified admin settings page
+  // Redirect legacy settings tabs to the new General settings page
   useEffect(() => {
     const legacyTabs: Tab[] = ['system', 'app-config', 'email', 'backup', 'maintenance']
     if (legacyTabs.includes(selectedTab)) {
-      router.replace('/admin/settings')
+      router.replace('/admin/general')
     }
   }, [selectedTab, router])
 
@@ -615,9 +615,9 @@ export default function AdminPage() {
           <p className="text-muted-foreground text-lg">System administration and user management</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => router.push('/admin/settings')} className="hover-lift shadow-soft">
+          <Button variant="outline" onClick={() => router.push('/admin/general')} className="hover-lift shadow-soft">
             <Settings className="h-5 w-5 mr-2" />
-            System Settings
+            General Settings
           </Button>
           <Button className="gradient-primary hover-lift shadow-medium text-white font-semibold">
             <Download className="h-5 w-5 mr-2" />

@@ -405,7 +405,7 @@ export default function InvoiceDetailPage() {
                 </Avatar>
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">{inv.client?.name || 'Unknown client'}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{inv.client?.email || ''}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 break-words">{inv.client?.email || ''}</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -453,7 +453,7 @@ export default function InvoiceDetailPage() {
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                     {(inv.items || []).map((it, idx) => (
                       <tr key={idx}>
-                        <td className="py-2 pr-4">{it.description}</td>
+                        <td className="py-2 pr-4 break-words">{it.description}</td>
                         <td className="py-2 pr-4">{it.quantity}</td>
                         <td className="py-2 pr-4">{formatCurrency(it.rate, inv.currency)}</td>
                         <td className="py-2 text-right">{formatCurrency((it.quantity || 0) * (it.rate || 0), inv.currency)}</td>
@@ -523,7 +523,7 @@ export default function InvoiceDetailPage() {
                       <div className="space-y-0.5">
                         <p className="text-sm font-medium">{p.invoiceNumber || inv.invoiceNumber}</p>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(p.processedAt).toLocaleString()} • {p.method.replace(/_/g,' ')} • {p.transactionId || p.paymentNumber || ''}
+                          {new Date(p.processedAt).toLocaleString()} • {p.method.replace(/_/g,' ')} • <span className="break-all">{p.transactionId || p.paymentNumber || ''}</span>
                         </p>
                       </div>
                       <div className="flex items-center gap-2">

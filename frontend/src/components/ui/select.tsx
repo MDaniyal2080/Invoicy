@@ -20,6 +20,8 @@ export const SelectTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       "flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50",
+      // Improve dark mode contrast similar to Input
+      "dark:bg-neutral-900/60 dark:text-neutral-100 dark:border-neutral-700 dark:focus:ring-indigo-500 dark:focus:border-indigo-500",
       className
     )}
     {...props}

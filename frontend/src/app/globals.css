@@ -79,6 +79,13 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+
+  /* Improve default field visibility in dark mode across the app */
+  .dark input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  .dark textarea,
+  .dark select {
+    @apply bg-neutral-900/60 text-neutral-100 placeholder:text-neutral-400 border-neutral-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500;
+  }
 }
 
 @layer utilities {

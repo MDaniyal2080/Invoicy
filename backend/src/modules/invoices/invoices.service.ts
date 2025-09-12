@@ -501,41 +501,39 @@ export class InvoicesService {
       throw new NotFoundException('Invoice not found');
     }
 
-    // Respect user email preferences; attempt to send email if enabled
-    const shouldSendEmail = !!(
-      invoice.user?.emailNotificationsEnabled &&
-      invoice.user?.emailNotifyNewInvoice
-    );
-
+    // Manual send endpoint: Always attempt to send regardless of user notification preferences.
+    // Preferences should govern automated emails, not explicit manual "send" actions.
     let emailSent = false;
     let emailSkipOrFailDescription: string | undefined;
-    if (shouldSendEmail) {
-      try {
-        // Ensure public share link is enabled so the client can view & pay
-        let invForEmail = invoice;
-        if (!invoice.shareEnabled || !invoice.shareId) {
-          invForEmail = await this.prisma.invoice.update({
-            where: { id },
-            data: {
-              shareEnabled: true,
-              shareId: invoice.shareId || randomUUID(),
-            },
-            include: { client: true, items: true, user: true },
-          });
-        }
-
-        const pdfBuffer = await this.pdfService.generateInvoicePdf(invForEmail);
-        await this.emailService.sendInvoiceEmail(invForEmail as any, pdfBuffer);
-        emailSent = true;
-      } catch (err) {
-        // Log and continue without failing the request
-        console.error('Failed to send invoice email:', err);
-        emailSkipOrFailDescription =
-          'Invoice marked as SENT (email sending failed)';
+    try {
+      // Ensure public share link is enabled so the client can view & pay
+      let invForEmail = invoice;
+      if (!invoice.shareEnabled || !invoice.shareId) {
+        invForEmail = await this.prisma.invoice.update({
+          where: { id },
+          data: {
+            shareEnabled: true,
+            shareId: invoice.shareId || randomUUID(),
+          },
+          include: { client: true, items: true, user: true },
+        });
       }
-    } else {
+
+      // Basic validation to avoid provider errors
+      if (!invForEmail?.client?.email) {
+        throw new BadRequestException('Client email address is missing');
+      }
+
+      const pdfBuffer = await this.pdfService.generateInvoicePdf(invForEmail);
+      await this.emailService.sendInvoiceEmail(invForEmail as any, pdfBuffer);
+      emailSent = true;
+    } catch (err) {
+      // Log and continue without failing the request
+      console.error('Failed to send invoice email:', err);
       emailSkipOrFailDescription =
-        'Invoice marked as SENT (email sending skipped by user preferences)';
+        err?.message === 'Client email address is missing'
+          ? 'Invoice marked as SENT (client email missing)'
+          : 'Invoice marked as SENT (email sending failed)';
     }
 
     // Update status to SENT
@@ -599,42 +597,10 @@ export class InvoicesService {
         continue;
       }
 
-      // Respect user email preferences
-      const shouldSendEmail = !!(
-        inv.user?.emailNotificationsEnabled && inv.user?.emailNotifyNewInvoice
-      );
-      if (!shouldSendEmail) {
-        try {
-          // Still mark as SENT (skipped email)
-          await this.prisma.invoice.update({
-            where: { id: inv.id },
-            data: { status: InvoiceStatus.SENT, sentAt: new Date() },
-          });
-          await this.prisma.invoiceHistory.create({
-            data: {
-              invoiceId: inv.id,
-              action: HistoryAction.SENT,
-              description:
-                'Invoice marked as SENT (email sending skipped by user preferences)',
-              performedBy: userId,
-            },
-          });
-          results.push({
-            id: inv.id,
-            status: 'skipped',
-            message: 'Email disabled by user preferences',
-          });
-        } catch (e: any) {
-          results.push({
-            id: inv.id,
-            status: 'failed',
-            message: e?.message || 'Failed to update invoice status',
-          });
-        }
-        continue;
-      }
-
       try {
+        if (!inv?.client?.email) {
+          throw new BadRequestException('Client email address is missing');
+        }
         const pdfBuffer = await this.pdfService.generateInvoicePdf(inv as any);
         await this.emailService.sendInvoiceEmail(inv as any, pdfBuffer);
         await this.prisma.invoice.update({
@@ -652,7 +618,6 @@ export class InvoicesService {
         results.push({ id: inv.id, status: 'sent' });
       } catch (e: any) {
         // Log and continue
-
         console.error('Failed to send invoice email (bulk):', e);
         try {
           await this.prisma.invoice.update({
@@ -664,7 +629,9 @@ export class InvoicesService {
               invoiceId: inv.id,
               action: HistoryAction.SENT,
               description:
-                'Invoice marked as SENT (email sending failed in bulk)',
+                e?.message === 'Client email address is missing'
+                  ? 'Invoice marked as SENT (client email missing)'
+                  : 'Invoice marked as SENT (email sending failed in bulk)',
               performedBy: userId,
             },
           });

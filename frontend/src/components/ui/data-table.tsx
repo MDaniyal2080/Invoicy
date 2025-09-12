@@ -31,7 +31,7 @@ export function DataTable<T extends { id: string | number }>({
               <th
                 key={column.key}
                 className={cn(
-                  'p-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase',
+                  'p-4 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase break-words',
                   column.align === 'center' && 'text-center',
                   column.align === 'right' && 'text-right',
                   column.align === 'left' && 'text-left',
@@ -54,7 +54,7 @@ export function DataTable<T extends { id: string | number }>({
                   <td
                     key={`${item.id}-${column.key}`}
                     className={cn(
-                      'p-4',
+                      'p-4 break-words',
                       column.align === 'center' && 'text-center',
                       column.align === 'right' && 'text-right',
                       column.align === 'left' && 'text-left',

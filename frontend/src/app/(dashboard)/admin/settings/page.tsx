@@ -50,6 +50,11 @@ type SystemSettings = {
 
 export default function AdminSystemSettingsPage() {
   const router = useRouter()
+  // Redirect to new split settings pages
+  useEffect(() => {
+    router.replace('/admin/general')
+  }, [router])
+  return null
   const { addNotification, setLoading } = useUIStore()
   const [settings, setSettings] = useState<SystemSettings | null>(null)
   const [loading, setLocalLoading] = useState(false)

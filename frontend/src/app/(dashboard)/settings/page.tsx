@@ -9,7 +9,6 @@ import {
   CreditCard,
   Bell,
   Shield,
-  Palette,
   Mail,
   Upload,
   Check,
@@ -36,7 +35,6 @@ const settingsTabs = [
   { id: 'billing', label: 'Billing', icon: CreditCard },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'security', label: 'Security', icon: Shield },
-  { id: 'preferences', label: 'Preferences', icon: Palette },
 ]
 
 export default function SettingsPage() {
@@ -1029,75 +1027,7 @@ export default function SettingsPage() {
           </Card>
         )
 
-      case 'preferences':
-        return (
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle>Preferences</CardTitle>
-              <CardDescription>Personalize your application experience</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="theme">Theme</Label>
-                <Select
-                  value={theme}
-                  onValueChange={(val) => {
-                    const value = val as ThemeOption
-                    setTheme(value)
-                    try { if (typeof window !== 'undefined') localStorage.setItem('theme', value) } catch {}
-                    applyTheme(value)
-                    toast.success('Theme updated')
-                  }}
-                >
-                  <SelectTrigger id="theme" className="w-full" aria-label="Theme">
-                    <SelectValue placeholder="Select theme" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-gray-900 border border-input">
-                    <SelectItem value="system">System</SelectItem>
-                    <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Choose how the app looks on your device.</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="language">Language</Label>
-                <Select
-                  onValueChange={(val) => {
-                    try {
-                      if (typeof window !== 'undefined') localStorage.setItem('language', val)
-                    } catch {}
-                    toast.success('Language preference saved')
-                  }}
-                >
-                  <SelectTrigger id="language" className="w-full" aria-label="Language">
-                    <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-gray-900 border border-input max-h-64 overflow-auto">
-                    <SelectItem value="system">System Default</SelectItem>
-                    <SelectItem value="en-US">English (US)</SelectItem>
-                    <SelectItem value="en-GB">English (UK)</SelectItem>
-                    <SelectItem value="fr-FR">Français (FR)</SelectItem>
-                    <SelectItem value="de-DE">Deutsch (DE)</SelectItem>
-                    <SelectItem value="es-ES">Español (ES)</SelectItem>
-                    <SelectItem value="pt-PT">Português (PT)</SelectItem>
-                    <SelectItem value="pt-BR">Português (BR)</SelectItem>
-                    <SelectItem value="it-IT">Italiano (IT)</SelectItem>
-                    <SelectItem value="nl-NL">Nederlands (NL)</SelectItem>
-                    <SelectItem value="pl-PL">Polski (PL)</SelectItem>
-                    <SelectItem value="tr-TR">Türkçe (TR)</SelectItem>
-                    <SelectItem value="ru-RU">Русский (RU)</SelectItem>
-                    <SelectItem value="ja-JP">日本語 (JP)</SelectItem>
-                    <SelectItem value="zh-CN">中文 (简体)</SelectItem>
-                    <SelectItem value="zh-TW">中文 (繁體)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Affects date/number formatting across the app where supported.</p>
-              </div>
-            </CardContent>
-          </Card>
-        )
+      // preferences tab removed
 
       case 'security':
         return (
@@ -1108,21 +1038,6 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                  <div className="flex items-start space-x-3">
-                    <Shield className="h-5 w-5 text-amber-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-amber-900 dark:text-amber-100">Two-Factor Authentication</p>
-                      <p className="text-sm text-amber-700 dark:text-amber-200 mt-1">
-                        Add an extra layer of security to your account
-                      </p>
-                      <Button variant="outline" size="sm" className="mt-3">
-                        Enable 2FA
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Change Password</h3>
                   <div className="space-y-2">

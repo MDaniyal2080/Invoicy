@@ -29,12 +29,17 @@ export class PublicConfigController {
     });
     const maxUploadMB =
       upRow?.value === undefined ? 10 : Number(upRow.value as any) || 10;
+    const maintRow = await this.prisma.systemSettings.findUnique({
+      where: { key: 'maintenanceMode' },
+    });
+    const maintenanceMode = Boolean(maintRow?.value as any);
     return {
       siteName,
       timezone,
       defaultCurrency,
       allowRegistration,
       maxUploadMB,
+      maintenanceMode,
     };
   }
 }

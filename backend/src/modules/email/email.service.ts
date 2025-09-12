@@ -191,9 +191,16 @@ export class EmailService {
 
   private async buildTransporterFromSettings(): Promise<nodemailer.Transporter> {
     const cfg = await this.loadEmailSettings();
-    const isBrevo = /brevo|sendinblue|smtp-relay\./i.test(cfg.host || '');
-    const smtpUser = cfg.user;
-    const smtpPass = isBrevo ? cfg.brevoApiKey : cfg.pass;
+    const isBrevoHost = /brevo|sendinblue|smtp-relay\./i.test(cfg.host || '');
+    let smtpUser = cfg.user;
+    let smtpPass = cfg.pass;
+
+    // Brevo SMTP interoperability: if using Brevo relay host and no EMAIL_PASSWORD is set,
+    // but a BREVO_API_KEY exists, use it as SMTP password and default username to 'apikey'.
+    if (isBrevoHost && (!smtpPass || String(smtpPass).trim() === '') && cfg.brevoApiKey) {
+      smtpUser = smtpUser || 'apikey';
+      smtpPass = cfg.brevoApiKey;
+    }
 
     return nodemailer.createTransport({
       host: cfg.host,
@@ -283,6 +290,24 @@ export class EmailService {
           );
         }
         console.error('Error sending email via SendGrid:', error);
+        try {
+          const prismaAny = this.prisma as any;
+          await prismaAny.errorLog.create({
+            data: {
+              level: 'ERROR',
+              message: `SendGrid send failure: ${error?.message || 'Unknown error'}`,
+              stack: String(error?.stack || ''),
+              method: 'POST',
+              path: 'email:send',
+              statusCode: 500,
+              context: {
+                provider: 'SENDGRID',
+                to,
+                subject,
+              } as any,
+            },
+          });
+        } catch {}
         throw error;
       }
     }
@@ -317,7 +342,14 @@ export class EmailService {
           subject,
           htmlContent: html,
         };
-        if (options?.replyTo) body.replyTo = options.replyTo;
+        // Set replyTo only if it's a valid email; Brevo expects an object { email, name }
+        if (options?.replyTo) {
+          const replyEmail = String(options.replyTo).trim();
+          const emailRe = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+          if (emailRe.test(replyEmail)) {
+            body.replyTo = { email: replyEmail, name: options?.fromName } as any;
+          }
+        }
         if (options?.headers) body.headers = options.headers;
         if (brevoAttachments.length) body.attachment = brevoAttachments;
 
@@ -340,6 +372,24 @@ export class EmailService {
         return { messageId, provider: 'BREVO' } as const;
       } catch (error) {
         console.error('Error sending email via Brevo API:', error);
+        try {
+          const prismaAny = this.prisma as any;
+          await prismaAny.errorLog.create({
+            data: {
+              level: 'ERROR',
+              message: `Brevo API send failure: ${error?.message || 'Unknown error'}`,
+              stack: String(error?.stack || ''),
+              method: 'POST',
+              path: 'email:send',
+              statusCode: 500,
+              context: {
+                provider: 'BREVO',
+                to,
+                subject,
+              } as any,
+            },
+          });
+        } catch {}
         throw error;
       }
     }
@@ -367,6 +417,24 @@ export class EmailService {
       return info;
     } catch (error) {
       console.error('Error sending email (SMTP):', error);
+      try {
+        const prismaAny = this.prisma as any;
+        await prismaAny.errorLog.create({
+          data: {
+            level: 'ERROR',
+            message: `SMTP send failure: ${error?.message || 'Unknown error'}`,
+            stack: String(error?.stack || ''),
+            method: 'POST',
+            path: 'email:send',
+            statusCode: 500,
+            context: {
+              provider: 'SMTP',
+              to,
+              subject,
+            } as any,
+          },
+        });
+      } catch {}
       throw error;
     }
   }
@@ -472,9 +540,9 @@ export class EmailService {
         throw new Error('Brevo API requires Node 18+ with global fetch available');
       }
       const fromEmail = from;
-      const sender = (fromName
+      const sender = fromName
         ? { email: fromEmail, name: fromName }
-        : { email: fromEmail }) as any;
+        : { email: fromEmail } as any;
 
       const body: any = {
         sender,
@@ -482,7 +550,13 @@ export class EmailService {
         subject,
         htmlContent: html,
       };
-      if (replyTo) body.replyTo = replyTo;
+      if (replyTo) {
+        const replyEmail = String(replyTo).trim();
+        const emailRe = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+        if (emailRe.test(replyEmail)) {
+          body.replyTo = { email: replyEmail, name: fromName } as any;
+        }
+      }
       if (headers) body.headers = headers;
 
       const res = await fetchFn('https://api.brevo.com/v3/smtp/email', {

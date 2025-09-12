@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const token = request.cookies.get('access_token')?.value
   const { pathname } = request.nextUrl
   const url = new URL(request.url)
@@ -72,12 +72,82 @@ export function middleware(request: NextRequest) {
     '/email-verification',
     '/invoice',
     '/payment',
+    '/public',
+    '/maintenance',
     '/_next',
     '/api/public'
   ]
 
   // Check if the route is public
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
+
+  // Maintenance mode check (from backend public config)
+  let maintenanceMode = false
+  try {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    const res = await fetch(`${API_BASE_URL}/config/public`, { headers, cache: 'no-store' })
+    if (res.ok) {
+      const data = await res.json()
+      maintenanceMode = !!data?.maintenanceMode
+    }
+  } catch {}
+
+  // When maintenance is on, only allow admin panel and login/verification pages to continue
+  if (maintenanceMode) {
+    // Decode role (lightweight, non-verified) to check admin-only access to /admin during maintenance
+    const decode = (jwt?: string) => {
+      try {
+        if (!jwt) return null
+        const [ , payload ] = jwt.split('.')
+        if (!payload) return null
+        const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+        const padded = base64 + '==='.slice((base64.length + 3) % 4)
+        const json = atob(padded)
+        return JSON.parse(json) as { role?: string }
+      } catch { return null }
+    }
+    const p = decode(token)
+    const role = (p?.role || '').toUpperCase()
+    const isAdminRole = role === 'ADMIN' || role === 'SUPER_ADMIN'
+
+    // Allow static assets, maintenance page itself, and public API
+    if (
+      pathname.startsWith('/_next') ||
+      pathname.startsWith('/maintenance') ||
+      pathname.startsWith('/api/public')
+    ) {
+      return NextResponse.next()
+    }
+
+    // Allow homepage and public invoice/payment pages to load with banner
+    if (pathname === '/' || pathname.startsWith('/public')) {
+      return NextResponse.next()
+    }
+
+    // Allow login and email verification pages (so admins can sign in / verify)
+    if (pathname === '/login' || pathname === '/register' || pathname.startsWith('/verify-email') || pathname.startsWith('/email-verification')) {
+      return NextResponse.next()
+    }
+
+    // Admin area: only admins may access; unauthenticated users should be redirected to login
+    if (pathname.startsWith('/admin')) {
+      if (!token) {
+        const loginUrl = new URL('/login', request.url)
+        loginUrl.searchParams.set('redirect', pathname)
+        return NextResponse.redirect(loginUrl)
+      }
+      if (!isAdminRole) {
+        return NextResponse.redirect(new URL('/maintenance', request.url))
+      }
+      return NextResponse.next()
+    }
+
+    // Everything else goes to maintenance
+    const dest = new URL('/maintenance', request.url)
+    return NextResponse.redirect(dest)
+  }
 
   // If accessing a public route, allow it
   if (isPublicRoute) {
@@ -115,6 +185,15 @@ export function middleware(request: NextRequest) {
 
   // If no token and trying to access protected route, redirect to login
   if (!token && !isPublicRoute) {
+    // During maintenance: if trying to access admin, send to login; otherwise show maintenance page
+    if (maintenanceMode) {
+      if (pathname.startsWith('/admin')) {
+        const loginUrl = new URL('/login', request.url)
+        loginUrl.searchParams.set('redirect', pathname)
+        return NextResponse.redirect(loginUrl)
+      }
+      return NextResponse.redirect(new URL('/maintenance', request.url))
+    }
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)

@@ -432,55 +432,55 @@ export default function InvoicesPage() {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <Card className="glass-card hover-lift animate-slide-in-up">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Total Outstanding</p>
-                <p className="text-3xl font-bold text-gradient">{formatCurrency(stats?.pendingAmount || 0)}</p>
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Outstanding</p>
+                <p className="text-xl sm:text-3xl font-bold text-gradient">{formatCurrency(stats?.pendingAmount || 0)}</p>
               </div>
-              <div className="p-3 bg-gradient-to-br from-warning/20 to-warning/10 rounded-xl">
-                <Clock className="h-7 w-7 text-warning" />
+              <div className="p-2 sm:p-3 bg-gradient-to-br from-warning/20 to-warning/10 rounded-lg sm:rounded-xl">
+                <Clock className="h-5 w-5 sm:h-7 sm:w-7 text-warning" />
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="glass-card hover-lift animate-slide-in-up" style={{animationDelay: '0.1s'}}>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Overdue</p>
-                <p className="text-3xl font-bold text-gradient">{formatCurrency(stats?.overdueAmount || 0)}</p>
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Overdue</p>
+                <p className="text-xl sm:text-3xl font-bold text-gradient">{formatCurrency(stats?.overdueAmount || 0)}</p>
               </div>
-              <div className="p-3 bg-gradient-to-br from-destructive/20 to-destructive/10 rounded-xl">
-                <Calendar className="h-7 w-7 text-destructive" />
+              <div className="p-2 sm:p-3 bg-gradient-to-br from-destructive/20 to-destructive/10 rounded-lg sm:rounded-xl">
+                <Calendar className="h-5 w-5 sm:h-7 sm:w-7 text-destructive" />
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="glass-card hover-lift animate-slide-in-up" style={{animationDelay: '0.2s'}}>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Paid This Month</p>
-                <p className="text-3xl font-bold text-gradient">{formatCurrency(stats?.monthlyRevenue || 0)}</p>
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Paid This Month</p>
+                <p className="text-xl sm:text-3xl font-bold text-gradient">{formatCurrency(stats?.monthlyRevenue || 0)}</p>
               </div>
-              <div className="p-3 bg-gradient-to-br from-success/20 to-success/10 rounded-xl">
-                <FileText className="h-7 w-7 text-success" />
+              <div className="p-2 sm:p-3 bg-gradient-to-br from-success/20 to-success/10 rounded-lg sm:rounded-xl">
+                <FileText className="h-5 w-5 sm:h-7 sm:w-7 text-success" />
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="glass-card hover-lift animate-slide-in-up" style={{animationDelay: '0.3s'}}>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Total Invoices</p>
-                <p className="text-3xl font-bold text-gradient">{stats?.totalInvoices ?? 0}</p>
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Invoices</p>
+                <p className="text-xl sm:text-3xl font-bold text-gradient">{stats?.totalInvoices ?? 0}</p>
               </div>
-              <div className="p-3 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-xl">
-                <FileText className="h-7 w-7 text-primary" />
+              <div className="p-2 sm:p-3 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-lg sm:rounded-xl">
+                <FileText className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
               </div>
             </div>
           </CardContent>
@@ -502,14 +502,16 @@ export default function InvoicesPage() {
               />
             </div>
             {/* Date range + Sort */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Input type="date" value={dateFromInput} onChange={(e) => setDateFromInput(e.target.value)} className="h-10 sm:h-12 border-2" aria-label="From date" />
-              <span className="text-sm text-muted-foreground">to</span>
-              <Input type="date" value={dateToInput} onChange={(e) => setDateToInput(e.target.value)} className="h-10 sm:h-12 border-2" aria-label="To date" />
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-2">
+                <Input type="date" value={dateFromInput} onChange={(e) => setDateFromInput(e.target.value)} className="h-10 sm:h-12 border-2 text-sm" aria-label="From date" />
+                <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">to</span>
+                <Input type="date" value={dateToInput} onChange={(e) => setDateToInput(e.target.value)} className="h-10 sm:h-12 border-2 text-sm" aria-label="To date" />
+              </div>
               <select
                 value={sortSel}
                 onChange={(e) => setSortSel(e.target.value as any)}
-                className="h-10 sm:h-12 border-2 rounded-md px-2 bg-background"
+                className="h-10 sm:h-12 border-2 rounded-md px-2 sm:px-3 bg-background text-sm"
                 aria-label="Sort"
               >
                 <option value="created_desc">Newest</option>
@@ -743,7 +745,94 @@ export default function InvoicesPage() {
       {/* Invoices List */}
       <Card className="glass-card">
         <CardContent className="p-0 sm:p-6">
-          <div className="overflow-x-auto -mx-4 sm:mx-0">
+          {/* Mobile Card Layout */}
+          <div className="block lg:hidden">
+            <div className="space-y-4 p-4">
+              {invoicesData.map((invoice) => (
+                <Card key={invoice.id} className="border shadow-sm hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(invoice.id)}
+                          onChange={() => toggleSelectOne(invoice.id)}
+                          className="rounded"
+                        />
+                        <div>
+                          <p className="font-semibold text-sm">{invoice.invoiceNumber || invoice.id}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString(locale) : ''}
+                          </p>
+                        </div>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => router.push(`/invoices/${invoice.id}`)}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => router.push(`/invoices/${invoice.id}/edit`)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3 mb-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white text-xs">
+                          {((invoice.client?.name || '').split(' ').map((n) => n[0]).join('').slice(0,2) || 'CL')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{invoice.client?.name || 'Unknown client'}</p>
+                        <p className="text-xs text-muted-foreground truncate">{invoice.client?.email || ''}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="font-bold text-sm">{formatCurrency(invoice.totalAmount, invoice.currency)}</p>
+                        <p className="text-xs text-muted-foreground">{invoice.items?.length || 0} items</p>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant={statusColors[invoice.status] || 'default'} className="text-xs mb-1">
+                          {invoice.status.replace(/_/g, ' ')}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground">
+                          Due: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString(locale) : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Badge variant={isInvoiceRecurring(invoice) ? 'premium' : 'info'} className="text-xs">
+                        {isInvoiceRecurring(invoice) ? 'Recurring' : 'One-time'}
+                      </Badge>
+                      <div className="flex items-center space-x-2">
+                        {invoice.isPublic && (
+                          <Badge variant="outline" className="text-xs">
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            Public
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+          
+          {/* Desktop Table Layout */}
+          <div className="hidden lg:block overflow-x-auto -mx-4 sm:mx-0">
             <div className="min-w-[800px]">
               <table>
                 <thead className="bg-gradient-to-r from-muted/50 to-muted/30 border-b border-border/50">
@@ -935,30 +1024,30 @@ export default function InvoicesPage() {
           </div>
           
           {/* Pagination */}
-          <div className="flex items-center justify-between px-6 py-6 border-t border-border/50 bg-gradient-to-r from-muted/20 to-transparent">
-            <p className="text-sm text-muted-foreground font-medium">
+          <div className="flex flex-col sm:flex-row items-center justify-between px-4 sm:px-6 py-4 sm:py-6 border-t border-border/50 bg-gradient-to-r from-muted/20 to-transparent gap-4 sm:gap-0">
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium text-center sm:text-left">
               {(() => {
                 const start = total === 0 ? 0 : (currentPage - 1) * pageSize + 1
                 const end = total === 0 ? 0 : Math.min(start + invoicesData.length - 1, total)
                 return `Showing ${start} to ${end} of ${total} results`
               })()}
             </p>
-            <div className="flex gap-2">
+            <div className="flex gap-1 sm:gap-2">
               <Button
                 variant="outline"
-                size="icon"
+                size="sm"
                 disabled={isLoading || currentPage <= 1}
-                className="border-2 hover:bg-muted/50 hover-lift transition-all"
+                className="border-2 hover:bg-muted/50 hover-lift transition-all h-8 w-8 sm:h-10 sm:w-10"
                 onClick={() => {
                   if (currentPage > 1) setPage(currentPage - 1)
                 }}
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
               {(() => {
                 const pages: number[] = []
-                const maxToShow = 5
-                let start = Math.max(1, currentPage - 2)
+                const maxToShow = window.innerWidth < 640 ? 3 : 5
+                let start = Math.max(1, currentPage - Math.floor(maxToShow / 2))
                 let end = Math.min(totalPages, start + maxToShow - 1)
                 start = Math.max(1, end - maxToShow + 1)
                 for (let p = start; p <= end; p++) pages.push(p)
@@ -968,7 +1057,7 @@ export default function InvoicesPage() {
                     variant={p === currentPage ? 'default' : 'outline'}
                     size="sm"
                     disabled={isLoading}
-                    className={p === currentPage ? 'shadow-medium' : 'border-2 hover:bg-muted/50 hover-lift transition-all'}
+                    className={`h-8 w-8 sm:h-10 sm:w-10 text-xs sm:text-sm ${p === currentPage ? 'shadow-medium' : 'border-2 hover:bg-muted/50 hover-lift transition-all'}`}
                     onClick={() => setPage(p)}
                   >
                     {p}
@@ -977,14 +1066,14 @@ export default function InvoicesPage() {
               })()}
               <Button
                 variant="outline"
-                size="icon"
+                size="sm"
                 disabled={isLoading || currentPage >= totalPages}
-                className="border-2 hover:bg-muted/50 hover-lift transition-all"
+                className="border-2 hover:bg-muted/50 hover-lift transition-all h-8 w-8 sm:h-10 sm:w-10"
                 onClick={() => {
                   if (currentPage < totalPages) setPage(currentPage + 1)
                 }}
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </div>
           </div>
