@@ -37,6 +37,36 @@ export class EmailService {
     return 'Invoicy';
   }
 
+  private async getAppUrl(): Promise<string> {
+    try {
+      const row = await this.prisma.systemSettings.findUnique({
+        where: { key: 'APP_URL' },
+      });
+      let v =
+        (row?.value as string | undefined) ??
+        this.configService.get('APP_URL') ??
+        this.configService.get('NEXT_PUBLIC_APP_URL') ??
+        this.configService.get('FRONTEND_URL');
+      if (typeof v !== 'string') v = v ? String(v) : '';
+      v = v.trim();
+      if (!v) return 'http://localhost:3000';
+      if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(v)) {
+        v = `https://${v}`;
+      }
+      return v;
+    } catch {
+      const envVal =
+        (this.configService.get('APP_URL') as string | undefined) ?? '';
+      const cleaned = typeof envVal === 'string' ? envVal.trim() : String(envVal ?? '');
+      if (cleaned) {
+        return /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(cleaned)
+          ? cleaned
+          : `https://${cleaned}`;
+      }
+      return 'http://localhost:3000';
+    }
+  }
+
   private async loadEmailSettings(): Promise<{
     host: string;
     port: number;
@@ -380,9 +410,15 @@ export class EmailService {
           );
         }
         sgMail.setApiKey(apiKey);
+
+        const fromEmail = from;
+        const fromObj = fromName
+          ? { email: fromEmail, name: fromName }
+          : { email: fromEmail };
+
         const msg = {
           to,
-          from: { email: from, name: fromName },
+          from: fromObj,
           subject,
           html,
           replyTo,
@@ -392,18 +428,26 @@ export class EmailService {
             openTracking: { enable: base.trackOpens },
           },
         } as any;
+
         const [response] = await sgMail.send(msg);
+        console.log(
+          'Email sent via SendGrid:',
+          response?.headers?.['x-message-id'] || response?.statusCode,
+        );
         return {
-          success: true,
           messageId: response?.headers?.['x-message-id'],
-        };
+          provider: 'SENDGRID',
+        } as const;
       } catch (e: any) {
         if (
           e?.code === 'MODULE_NOT_FOUND' ||
           e?.code === 'ERR_MODULE_NOT_FOUND'
         ) {
+          console.error(
+            'SendGrid provider selected but @sendgrid/mail is not installed',
+          );
           throw new Error(
-            'SendGrid test requested but @sendgrid/mail is not installed',
+            'SendGrid provider selected but @sendgrid/mail package is not installed on the server',
           );
         }
         throw e;
@@ -427,15 +471,20 @@ export class EmailService {
       if (typeof fetchFn !== 'function') {
         throw new Error('Brevo API requires Node 18+ with global fetch available');
       }
-      const sender = { email: from, name: fromName } as any;
+      const fromEmail = from;
+      const sender = (fromName
+        ? { email: fromEmail, name: fromName }
+        : { email: fromEmail }) as any;
+
       const body: any = {
         sender,
         to: [{ email: to }],
         subject,
         htmlContent: html,
-        replyTo,
-        headers,
       };
+      if (replyTo) body.replyTo = replyTo;
+      if (headers) body.headers = headers;
+
       const res = await fetchFn('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
@@ -447,12 +496,12 @@ export class EmailService {
       });
       if (!res.ok) {
         const errText = await res.text();
-        throw new Error(
-          `Brevo API error: ${res.status} ${res.statusText} - ${errText}`,
-        );
+        throw new Error(`Brevo API error: ${res.status} ${res.statusText} - ${errText}`);
       }
       const data: any = await res.json().catch(() => ({}));
-      return { success: true, messageId: data?.messageId };
+      const messageId = data?.messageId || data?.messageID || undefined;
+      console.log('Email sent via Brevo API:', messageId || res.status);
+      return { messageId, provider: 'BREVO' } as const;
     }
 
     // Default to SMTP test (with overrides)
@@ -471,7 +520,7 @@ export class EmailService {
   async sendInvoiceEmail(invoice: any, pdfBuffer: Buffer) {
     const siteName = await this.getSiteName();
     const subject = `Invoice #${invoice.invoiceNumber} from ${invoice.user.companyName || invoice.user.firstName + ' ' + invoice.user.lastName}`;
-    const appUrl = this.configService.get('APP_URL') || 'http://localhost:3000';
+    const appUrl = await this.getAppUrl();
     const publicLink =
       invoice?.shareEnabled && invoice?.shareId
         ? new URL(`/public/invoices/${invoice.shareId}`, appUrl).toString()
@@ -527,7 +576,7 @@ export class EmailService {
             <p>Please make payment by the due date mentioned above.</p>
             ${
               publicLink
-                ? `<p style="text-align:center"><a href="${publicLink}" class="button">View & Pay Invoice</a></p>
+                ? `<p style="text-align:center"><a href="${publicLink}" class="button" style="color:#ffffff !important;background-color:#4F46E5;text-decoration:none;border-radius:5px;padding:12px 24px;display:inline-block;">View & Pay Invoice</a></p>
             <p style="text-align:center;color:#6b7280;font-size:12px">If the button doesn't work, copy and paste this link: <span style="word-break:break-all;color:#4F46E5">${publicLink}</span></p>`
                 : ''
             }
@@ -571,10 +620,10 @@ export class EmailService {
   }
 
   async sendPasswordResetEmail(user: any, resetToken: string) {
-    const base = this.configService.get('APP_URL') || 'http://localhost:3000';
+    const appUrl = await this.getAppUrl();
     const resetUrl = new URL(
       `/reset-password?token=${resetToken}`,
-      base,
+      appUrl,
     ).toString();
 
     const siteName = await this.getSiteName();
@@ -605,7 +654,7 @@ export class EmailService {
             <p>We received a request to reset your password. Click the button below to reset it:</p>
             
             <center>
-              <a href="${resetUrl}" class="button">Reset Password</a>
+              <a href="${resetUrl}" class="button" style="color:#ffffff !important;background-color:#4F46E5;text-decoration:none;border-radius:5px;padding:12px 24px;display:inline-block;">Reset Password</a>
             </center>
             
             <p>Or copy and paste this link into your browser:</p>
@@ -629,10 +678,10 @@ export class EmailService {
   }
 
   async sendEmailVerification(user: any, verificationToken: string) {
-    const base = this.configService.get('APP_URL') || 'http://localhost:3000';
+    const appUrl = await this.getAppUrl();
     const verifyUrl = new URL(
       `/verify-email?token=${verificationToken}`,
-      base,
+      appUrl,
     ).toString();
 
     const siteName = await this.getSiteName();
@@ -663,7 +712,7 @@ export class EmailService {
             <p>Welcome to ${siteName}! We're excited to have you on board. To get started and access all features, please verify your email address by clicking the button below:</p>
             
             <center>
-              <a href="${verifyUrl}" class="button">Verify Email & Get Started</a>
+              <a href="${verifyUrl}" class="button" style="color:#ffffff !important;background-color:#4F46E5;text-decoration:none;border-radius:5px;padding:12px 24px;display:inline-block;">Verify Email & Get Started</a>
             </center>
             
             <p>Or copy and paste this link into your browser:</p>
@@ -697,6 +746,8 @@ export class EmailService {
   async sendWelcomeEmail(user: any) {
     const siteName = await this.getSiteName();
     const subject = `Welcome to ${siteName}!`;
+    const appUrl = await this.getAppUrl();
+    const dashboardUrl = new URL('/dashboard', appUrl).toString();
 
     const html = `
       <!DOCTYPE html>
@@ -746,7 +797,7 @@ export class EmailService {
             </div>
             
             <center>
-              <a href="${new URL('/dashboard', this.configService.get('APP_URL') || 'http://localhost:3000').toString()}" class="button">Go to Dashboard</a>
+              <a href="${dashboardUrl}" class="button" style="color:#ffffff !important;background-color:#4F46E5;text-decoration:none;border-radius:5px;padding:12px 24px;display:inline-block;">Go to Dashboard</a>
             </center>
             
             <p>If you have any questions, feel free to reach out to our support team.</p>
@@ -841,7 +892,7 @@ export class EmailService {
   ) {
     const siteName = await this.getSiteName();
     const subject = `Receipt for Invoice #${invoice.invoiceNumber}`;
-    const appUrl = this.configService.get('APP_URL') || 'http://localhost:3000';
+    const appUrl = await this.getAppUrl();
     const publicLink =
       invoice?.shareEnabled && invoice?.shareId
         ? new URL(`/public/invoices/${invoice.shareId}`, appUrl).toString()
@@ -876,7 +927,7 @@ export class EmailService {
               <div class="detail-row"><strong>Payment Date:</strong><span>${new Date().toLocaleDateString()}</span></div>
               <div class="detail-row"><strong>Balance Due:</strong><span>${invoice.currency} ${Number(invoice.balanceDue ?? Math.max(0, (invoice.totalAmount || 0) - (invoice.paidAmount || 0))).toFixed(2)}</span></div>
             </div>
-            ${publicLink ? `<p>You can view the invoice here:</p><p><a href="${publicLink}" class="button">View Invoice</a></p>` : ''}
+            ${publicLink ? `<p>You can view the invoice here:</p><p><a href="${publicLink}" class="button" style="color:#ffffff !important;background-color:#4F46E5;text-decoration:none;border-radius:6px;padding:10px 18px;display:inline-block;">View Invoice</a></p>` : ''}
             <p>If you have any questions, just reply to this email.</p>
           </div>
           <div class="footer">
@@ -1119,7 +1170,7 @@ export class EmailService {
       | 'welcome' = 'welcome',
   ): Promise<{ subject: string; html: string }> {
     const siteName = await this.getSiteName();
-    const appUrl = this.configService.get('APP_URL') || 'http://localhost:3000';
+    const appUrl = await this.getAppUrl();
     const sampleUser = {
       firstName: 'Jane',
       lastName: 'Doe',
