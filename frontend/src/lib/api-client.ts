@@ -634,6 +634,12 @@ class ApiClient {
     return response.data as { url: string }
   }
 
+  async verifyPublicInvoiceStripeCheckout(shareId: string, sessionId: string): Promise<{ processed: 'created' | 'exists'; status: string; paidAmount: number; balanceDue: number }>
+  {
+    const response = await this.client.post(`/public/invoices/${shareId}/payments/stripe/verify`, { sessionId })
+    return response.data as { processed: 'created' | 'exists'; status: string; paidAmount: number; balanceDue: number }
+  }
+
   // Analytics endpoints
   async getDashboardStats() {
     const response = await this.client.get('/analytics/dashboard');

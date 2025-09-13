@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -29,6 +29,7 @@ const statusColors: Record<InvoiceStatus, 'default' | 'secondary' | 'destructive
 export default function PublicInvoicePage() {
   const params = useParams()
   const shareId = (params?.shareId as string) || ''
+  const searchParams = useSearchParams()
 
   const [invoice, setInvoice] = useState<Invoice | null>(null)
   const [loading, setLoading] = useState(true)
@@ -45,6 +46,8 @@ export default function PublicInvoicePage() {
   const [result, setResult] = useState<{ success: boolean; message: string; transactionId?: string } | null>(null)
   const [isStripeRedirecting, setIsStripeRedirecting] = useState(false)
   const [stripeError, setStripeError] = useState<string | null>(null)
+  const [verifyingOnReturn, setVerifyingOnReturn] = useState(false)
+  const [verifiedSessionId, setVerifiedSessionId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!shareId) return
@@ -65,6 +68,32 @@ export default function PublicInvoicePage() {
     })()
     return () => { mounted = false }
   }, [shareId])
+
+  // Fallback verification: if returning from Stripe with paid=1 & session_id, verify server-side and refresh invoice
+  useEffect(() => {
+    if (!shareId) return
+    const paid = searchParams.get('paid')
+    const sid = searchParams.get('session_id')
+    if (paid === '1' && sid && sid !== verifiedSessionId) {
+      let cancelled = false
+      ;(async () => {
+        try {
+          setVerifyingOnReturn(true)
+          setStripeError(null)
+          await apiClient.verifyPublicInvoiceStripeCheckout(shareId, sid)
+          if (cancelled) return
+          setVerifiedSessionId(sid)
+          const fresh = await apiClient.getPublicInvoice(shareId)
+          if (!cancelled) setInvoice(fresh)
+        } catch (e: unknown) {
+          if (!cancelled) setStripeError(getErrorMessage(e, 'We could not auto-verify your payment. Please refresh in a moment.'))
+        } finally {
+          if (!cancelled) setVerifyingOnReturn(false)
+        }
+      })()
+      return () => { cancelled = true }
+    }
+  }, [searchParams, shareId, verifiedSessionId])
 
   // Initialize default amount from invoice balance
   useEffect(() => {
@@ -197,6 +226,13 @@ export default function PublicInvoicePage() {
                       day: 'numeric' 
                     })}
                   </span>
+                </div>
+              )}
+              {/* Payment return verification hint */}
+              {verifyingOnReturn && (
+                <div className="text-xs text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md px-3 py-2 inline-flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-3 w-3 border-2 border-blue-300 border-t-blue-600"></div>
+                  Verifying your payment...
                 </div>
               )}
             </div>

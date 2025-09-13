@@ -361,7 +361,7 @@ export class StripeService {
         },
       ],
       customer_email: invoice.client?.email || undefined,
-      success_url: `${origin}/public/invoices/${encodeURIComponent(shareId)}?paid=1`,
+      success_url: `${origin}/public/invoices/${encodeURIComponent(shareId)}?paid=1&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/public/invoices/${encodeURIComponent(shareId)}?canceled=1`,
       metadata: {
         type: 'invoice_payment',
@@ -376,6 +376,130 @@ export class StripeService {
     });
 
     return { url: session.url };
+  }
+
+  // Verify a Checkout session for a public invoice by shareId. This is a fallback when webhooks are delayed or misconfigured.
+  // Idempotent: if a Payment with the same transactionId already exists, it will not create a duplicate nor send duplicate emails.
+  async verifyInvoiceCheckoutSessionByShareId(shareId: string, sessionId: string) {
+    const stripe = await this.getStripe();
+    const session = await stripe.checkout.sessions.retrieve(sessionId as any);
+    if (!session) {
+      throw new NotFoundException('Checkout session not found');
+    }
+    const metadata = (session as any)?.metadata || {};
+    if (metadata?.type !== 'invoice_payment') {
+      throw new BadRequestException('Invalid session type for invoice verification');
+    }
+    if (metadata?.shareId !== shareId) {
+      throw new BadRequestException('Session does not match this invoice');
+    }
+
+    const invoiceId = metadata?.invoiceId as string | undefined;
+    const userId = metadata?.userId as string | undefined;
+    if (!invoiceId || !userId) {
+      throw new BadRequestException('Missing invoice or user reference in session');
+    }
+
+    // Determine transactionId (prefer payment_intent)
+    const transactionId = typeof (session as any).payment_intent === 'string'
+      ? (session as any).payment_intent
+      : (session as any).id;
+
+    // If payment already recorded for this session, treat as processed
+    const existingPayment = await this.prisma.payment.findUnique({ where: { transactionId } }).catch(() => null);
+
+    // Fetch invoice for current totals
+    const invoice = await this.prisma.invoice.findUnique({
+      where: { id: invoiceId },
+      include: { payments: true, client: true, user: true },
+    });
+    if (!invoice) throw new NotFoundException('Invoice not found');
+
+    let created = false;
+    let paidAdded = 0;
+    if (!existingPayment) {
+      // Trust Stripe that this session completed; ensure amount_total available
+      const paidCents = (session as any).amount_total || 0;
+      paidAdded = Math.max(0, paidCents / 100);
+      if (paidAdded <= 0) {
+        throw new BadRequestException('Session not paid or amount missing');
+      }
+
+      // Create payment record (unique by transactionId)
+      await this.prisma.payment.create({
+        data: {
+          invoiceId: invoice.id,
+          amount: paidAdded,
+          paymentMethod: 'STRIPE' as any,
+          paymentDate: new Date(),
+          transactionId,
+          status: 'COMPLETED' as any,
+          notes: 'Stripe Checkout payment (verified on return)',
+          paymentNumber: `PMT-${Date.now()}`,
+          netAmount: paidAdded,
+        },
+      });
+      created = true;
+    }
+
+    // Recalculate totals and update invoice status
+    const payments = invoice.payments || [];
+    const totalPaidExisting = payments.filter((p) => (p as any).status === 'COMPLETED').reduce((s, p) => s + (p as any).amount, 0);
+    const newTotalPaid = totalPaidExisting + (created ? paidAdded : 0);
+    const fullyPaid = newTotalPaid >= invoice.totalAmount - 0.0001;
+    const updated = await this.prisma.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        status: fullyPaid ? ('PAID' as any) : ('PARTIALLY_PAID' as any),
+        paidAmount: newTotalPaid,
+        balanceDue: Math.max(0, invoice.totalAmount - newTotalPaid),
+        paidAt: fullyPaid ? new Date() : invoice.paidAt,
+      },
+      include: { client: true, user: true },
+    });
+
+    // History (only when we created the payment now)
+    if (created) {
+      await this.prisma.invoiceHistory.create({
+        data: {
+          invoiceId: invoice.id,
+          action: 'PAYMENT_RECEIVED' as any,
+          description: `Stripe payment of ${paidAdded.toFixed(2)} verified on return`,
+          performedBy: userId,
+        },
+      });
+    }
+
+    // Send emails only on first processing to avoid duplicates
+    if (created) {
+      try {
+        if (updated.user?.emailNotificationsEnabled && updated.user?.emailNotifyPaymentReceived) {
+          await this.emailService.sendPaymentReceivedEmail(
+            updated.user as any,
+            updated.client as any,
+            updated as any,
+            paidAdded,
+          );
+        }
+        if (updated.user?.emailNotificationsEnabled) {
+          await this.emailService.sendClientPaymentReceiptEmail(
+            updated.client as any,
+            updated as any,
+            paidAdded,
+            updated.user as any,
+          );
+        }
+      } catch (e) {
+        console.error('Failed to send payment email (verify fallback):', (e as any)?.message || e);
+      }
+    }
+
+    return {
+      processed: created ? 'created' : 'exists',
+      status: updated.status,
+      paidAmount: updated.paidAmount,
+      balanceDue: updated.balanceDue,
+    } as const;
   }
 
   // --- Webhook handling ---

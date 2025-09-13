@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
+import { Body, Controller, Param, Post, BadRequestException } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { InvoicesService } from '../invoices/invoices.service';
 import { StripeService } from './stripe.service';
@@ -91,5 +91,21 @@ export class PublicPaymentsController {
   @Post(':shareId/payments/stripe/checkout')
   async createStripeCheckout(@Param('shareId') shareId: string) {
     return this.stripeService.createInvoiceCheckoutByShareId(shareId);
+  }
+
+  // Stripe Checkout verify (public) — fallback when webhooks are delayed or missing
+  @Post(':shareId/payments/stripe/verify')
+  async verifyStripeCheckout(
+    @Param('shareId') shareId: string,
+    @Body() body: { sessionId?: string },
+  ) {
+    const sessionId = String(body?.sessionId || '').trim();
+    if (!sessionId) {
+      throw new BadRequestException('sessionId is required');
+    }
+    return this.stripeService.verifyInvoiceCheckoutSessionByShareId(
+      shareId,
+      sessionId,
+    );
   }
 }
