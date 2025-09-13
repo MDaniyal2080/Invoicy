@@ -817,12 +817,17 @@ export default function InvoicesPage() {
                         {isInvoiceRecurring(invoice) ? 'Recurring' : 'One-time'}
                       </Badge>
                       <div className="flex items-center space-x-2">
-                        {invoice.isPublic && (
-                          <Badge variant="outline" className="text-xs">
-                            <ExternalLink className="h-3 w-3 mr-1" />
-                            Public
-                          </Badge>
-                        )}
+                        {(() => {
+                          const shareId = (invoice as any)?.shareId as string | undefined
+                          const shareEnabled = (invoice as any)?.shareEnabled
+                          const isPublic = Boolean(shareId && shareEnabled !== false)
+                          return isPublic ? (
+                            <Badge variant="outline" className="text-xs">
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              Public
+                            </Badge>
+                          ) : null
+                        })()}
                       </div>
                     </div>
                   </CardContent>

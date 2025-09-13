@@ -320,19 +320,19 @@ export default function AdminSystemSettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <Label htmlFor="companyName">Company Name</Label>
-                  <Input id="companyName" value={settings.companyName || ''} onChange={(e) => update('companyName', e.target.value)} placeholder="Invoicy" />
+                  <Input id="companyName" value={settings?.companyName || ''} onChange={(e) => update('companyName', e.target.value)} placeholder="Invoicy" />
                 </div>
                 <div>
                   <Label htmlFor="companyEmail">Company Email</Label>
-                  <Input id="companyEmail" type="email" value={settings.companyEmail || ''} onChange={(e) => update('companyEmail', e.target.value)} placeholder="admin@invoicy.com" />
+                  <Input id="companyEmail" type="email" value={settings?.companyEmail || ''} onChange={(e) => update('companyEmail', e.target.value)} placeholder="admin@invoicy.com" />
                 </div>
                 <div>
                   <Label htmlFor="companyPhone">Company Phone</Label>
-                  <Input id="companyPhone" value={settings.companyPhone || ''} onChange={(e) => update('companyPhone', e.target.value)} placeholder="+1 555-123-4567" />
+                  <Input id="companyPhone" value={settings?.companyPhone || ''} onChange={(e) => update('companyPhone', e.target.value)} placeholder="+1 555-123-4567" />
                 </div>
                 <div>
                   <Label htmlFor="companyAddress">Company Address</Label>
-                  <Input id="companyAddress" value={settings.companyAddress || ''} onChange={(e) => update('companyAddress', e.target.value)} placeholder="123 Main St, City, Country" />
+                  <Input id="companyAddress" value={settings?.companyAddress || ''} onChange={(e) => update('companyAddress', e.target.value)} placeholder="123 Main St, City, Country" />
                 </div>
               </div>
             </CardContent>
@@ -367,7 +367,7 @@ export default function AdminSystemSettingsPage() {
             <div className="flex items-center justify-between">
               <CardTitle>Payments (Stripe)</CardTitle>
               <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border">
-                Mode: <b>{(settings.STRIPE_PUBLISHABLE_KEY || '').startsWith('pk_live_') ? 'Live' : 'Test'}</b>
+                Mode: <b>{(settings?.STRIPE_PUBLISHABLE_KEY || '').startsWith('pk_live_') ? 'Live' : 'Test'}</b>
               </span>
             </div>
             <CardDescription>
@@ -379,30 +379,30 @@ export default function AdminSystemSettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="STRIPE_PUBLISHABLE_KEY">Publishable Key</Label>
-                <Input id="STRIPE_PUBLISHABLE_KEY" value={settings.STRIPE_PUBLISHABLE_KEY || ''} onChange={(e) => update('STRIPE_PUBLISHABLE_KEY', e.target.value)} placeholder="pk_test_..." />
+                <Input id="STRIPE_PUBLISHABLE_KEY" value={settings?.STRIPE_PUBLISHABLE_KEY || ''} onChange={(e) => update('STRIPE_PUBLISHABLE_KEY', e.target.value)} placeholder="pk_test_..." />
               </div>
               <div>
                 <Label htmlFor="STRIPE_SECRET_KEY">Secret Key</Label>
-                <Input id="STRIPE_SECRET_KEY" type="password" value={settings.STRIPE_SECRET_KEY || ''} onChange={(e) => update('STRIPE_SECRET_KEY', e.target.value)} placeholder="sk_test_... (use __SECRET__ to keep current)" />
+                <Input id="STRIPE_SECRET_KEY" type="password" value={settings?.STRIPE_SECRET_KEY || ''} onChange={(e) => update('STRIPE_SECRET_KEY', e.target.value)} placeholder="sk_test_... (use __SECRET__ to keep current)" />
               </div>
               <div>
                 <Label htmlFor="STRIPE_WEBHOOK_SECRET">Webhook Secret</Label>
-                <Input id="STRIPE_WEBHOOK_SECRET" type="password" value={settings.STRIPE_WEBHOOK_SECRET || ''} onChange={(e) => update('STRIPE_WEBHOOK_SECRET', e.target.value)} placeholder="whsec_... (use __SECRET__ to keep current)" />
+                <Input id="STRIPE_WEBHOOK_SECRET" type="password" value={settings?.STRIPE_WEBHOOK_SECRET || ''} onChange={(e) => update('STRIPE_WEBHOOK_SECRET', e.target.value)} placeholder="whsec_... (use __SECRET__ to keep current)" />
                 <p className="text-xs text-gray-500 mt-1">Configure your Stripe webhook to POST to <code className="font-mono">/api/webhooks/stripe</code>.</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <Label htmlFor="STRIPE_PRICE_BASIC">Price ID (Basic)</Label>
-                  <Input id="STRIPE_PRICE_BASIC" value={settings.STRIPE_PRICE_BASIC || ''} onChange={(e) => update('STRIPE_PRICE_BASIC', e.target.value)} placeholder="price_..." />
+                  <Input id="STRIPE_PRICE_BASIC" value={settings?.STRIPE_PRICE_BASIC || ''} onChange={(e) => update('STRIPE_PRICE_BASIC', e.target.value)} placeholder="price_..." />
                 </div>
                 <div>
                   <Label htmlFor="STRIPE_PRICE_PREMIUM">Price ID (Premium)</Label>
-                  <Input id="STRIPE_PRICE_PREMIUM" value={settings.STRIPE_PRICE_PREMIUM || ''} onChange={(e) => update('STRIPE_PRICE_PREMIUM', e.target.value)} placeholder="price_..." />
+                  <Input id="STRIPE_PRICE_PREMIUM" value={settings?.STRIPE_PRICE_PREMIUM || ''} onChange={(e) => update('STRIPE_PRICE_PREMIUM', e.target.value)} placeholder="price_..." />
                 </div>
               </div>
               <div>
                 <Label htmlFor="STRIPE_PLATFORM_FEE_BPS">Platform Fee (basis points)</Label>
-                <Input id="STRIPE_PLATFORM_FEE_BPS" type="number" step="1" value={Number(settings.STRIPE_PLATFORM_FEE_BPS ?? 0)} onChange={(e) => update('STRIPE_PLATFORM_FEE_BPS', parseInt(e.target.value || '0'))} />
+                <Input id="STRIPE_PLATFORM_FEE_BPS" type="number" step="1" value={Number(settings?.STRIPE_PLATFORM_FEE_BPS ?? 0)} onChange={(e) => update('STRIPE_PLATFORM_FEE_BPS', parseInt(e.target.value || '0'))} />
                 <p className="text-xs text-gray-500 mt-1">Example: 250 = 2.5% fee on invoice payments collected via Connect.</p>
               </div>
             </div>
@@ -421,7 +421,7 @@ export default function AdminSystemSettingsPage() {
                 <div>
                   <Label htmlFor="defaultCurrency">Default Currency</Label>
                   <Select
-                    value={settings.defaultCurrency || 'USD'}
+                    value={settings?.defaultCurrency || 'USD'}
                     onValueChange={(val) => update('defaultCurrency', val)}
                   >
                     <SelectTrigger id="defaultCurrency" className="mt-2 w-full" aria-label="Default Currency">
@@ -438,11 +438,11 @@ export default function AdminSystemSettingsPage() {
                 </div>
                 <div>
                   <Label htmlFor="defaultTaxRate">Default Tax Rate (%)</Label>
-                  <Input id="defaultTaxRate" type="number" step="0.01" value={Number(settings.defaultTaxRate ?? 0)} onChange={(e) => update('defaultTaxRate', parseFloat(e.target.value))} />
+                  <Input id="defaultTaxRate" type="number" step="0.01" value={Number(settings?.defaultTaxRate ?? 0)} onChange={(e) => update('defaultTaxRate', parseFloat(e.target.value))} />
                 </div>
                 <div>
                   <Label htmlFor="defaultPaymentTerms">Payment Terms (days)</Label>
-                  <Input id="defaultPaymentTerms" type="number" step="1" value={Number(settings.defaultPaymentTerms ?? 30)} onChange={(e) => update('defaultPaymentTerms', parseInt(e.target.value || '0'))} />
+                  <Input id="defaultPaymentTerms" type="number" step="1" value={Number(settings?.defaultPaymentTerms ?? 30)} onChange={(e) => update('defaultPaymentTerms', parseInt(e.target.value || '0'))} />
                 </div>
               </div>
             </CardContent>
@@ -457,15 +457,15 @@ export default function AdminSystemSettingsPage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="flex items-center gap-3">
-                  <input id="emailNotifications" type="checkbox" className="h-4 w-4" checked={!!settings.emailNotifications} onChange={(e) => update('emailNotifications', e.target.checked)} />
+                  <input id="emailNotifications" type="checkbox" className="h-4 w-4" checked={!!settings?.emailNotifications} onChange={(e) => update('emailNotifications', e.target.checked)} />
                   <Label htmlFor="emailNotifications">Email Notifications</Label>
                 </div>
                 <div className="flex items-center gap-3">
-                  <input id="autoBackup" type="checkbox" className="h-4 w-4" checked={!!settings.autoBackup} onChange={(e) => update('autoBackup', e.target.checked)} />
+                  <input id="autoBackup" type="checkbox" className="h-4 w-4" checked={!!settings?.autoBackup} onChange={(e) => update('autoBackup', e.target.checked)} />
                   <Label htmlFor="autoBackup">Automatic Backups</Label>
                 </div>
                 <div className="flex items-center gap-3">
-                  <input id="maintenanceMode" type="checkbox" className="h-4 w-4" checked={!!settings.maintenanceMode} onChange={(e) => handleMaintenanceChange(e.target.checked)} />
+                  <input id="maintenanceMode" type="checkbox" className="h-4 w-4" checked={!!settings?.maintenanceMode} onChange={(e) => handleMaintenanceChange(e.target.checked)} />
                   <Label htmlFor="maintenanceMode">Maintenance Mode</Label>
                 </div>
               </div>
@@ -481,7 +481,7 @@ export default function AdminSystemSettingsPage() {
             <CardContent>
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300">
-                  <div>Last backup: <span className="font-medium">{backupStatus?.lastBackupAt ? new Date(backupStatus.lastBackupAt).toLocaleString() : '—'}</span></div>
+                  <div>Last backup: <span className="font-medium">{(() => { const last = backupStatus?.lastBackupAt; return typeof last === 'string' ? new Date(last as string).toLocaleString() : '—' })()}</span></div>
                   <div>Backup ID: <span className="font-mono">{backupStatus?.lastBackupId || '—'}</span></div>
                   <div>File: <span className="font-mono">{backupStatus?.lastBackupFile || '—'}</span></div>
                   <div>Maintenance: <span className="font-medium">{backupStatus?.maintenanceMode ? 'Enabled' : 'Disabled'}</span></div>
@@ -501,7 +501,7 @@ export default function AdminSystemSettingsPage() {
               <div className="flex items-center justify-between">
                 <CardTitle>Email (SMTP)</CardTitle>
                 <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border">
-                  Provider: <b>{String(settings.EMAIL_PROVIDER || 'SMTP')}</b>
+                  Provider: <b>{String(settings?.EMAIL_PROVIDER || 'SMTP')}</b>
                 </span>
               </div>
               <CardDescription>
@@ -516,7 +516,7 @@ export default function AdminSystemSettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <Label htmlFor="EMAIL_PROVIDER">Email Provider</Label>
-                  <Select value={(settings.EMAIL_PROVIDER || 'SMTP') as any} onValueChange={(val) => update('EMAIL_PROVIDER', val as any)}>
+                  <Select value={(settings?.EMAIL_PROVIDER || 'SMTP') as any} onValueChange={(val) => update('EMAIL_PROVIDER', val as any)}>
                     <SelectTrigger id="EMAIL_PROVIDER" className="mt-2 w-full" aria-label="Email Provider">
                       <SelectValue />
                     </SelectTrigger>
@@ -529,26 +529,26 @@ export default function AdminSystemSettingsPage() {
                 </div>
                 <div>
                   <Label htmlFor="EMAIL_FROM">From Email</Label>
-                  <Input id="EMAIL_FROM" type="email" value={settings.EMAIL_FROM || ''} onChange={(e) => update('EMAIL_FROM', e.target.value)} placeholder="noreply@invoicy.com" />
+                  <Input id="EMAIL_FROM" type="email" value={settings?.EMAIL_FROM || ''} onChange={(e) => update('EMAIL_FROM', e.target.value)} placeholder="noreply@invoicy.com" />
                   <p className="text-xs text-gray-500 mt-1">Envelope From address used by the provider. The visible From name is customized per email (e.g., "Acme Co via Invoicy"), and replies go to the user’s company email.</p>
                 </div>
               </div>
 
               {/* SendGrid Options */}
-              {settings.EMAIL_PROVIDER === 'SENDGRID' && (
+              {settings?.EMAIL_PROVIDER === 'SENDGRID' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                   <div>
                     <Label htmlFor="SENDGRID_API_KEY">SendGrid API Key</Label>
-                    <Input id="SENDGRID_API_KEY" type="password" value={settings.SENDGRID_API_KEY || ''} onChange={(e) => update('SENDGRID_API_KEY', e.target.value)} placeholder="SG.xxxxxx" />
+                    <Input id="SENDGRID_API_KEY" type="password" value={settings?.SENDGRID_API_KEY || ''} onChange={(e) => update('SENDGRID_API_KEY', e.target.value)} placeholder="SG.xxxxxx" />
                     <p className="text-xs text-gray-500 mt-1">Use the masked value "__SECRET__" to keep the existing key unchanged.</p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex items-center gap-3">
-                      <input id="EMAIL_TRACK_OPENS" type="checkbox" className="h-4 w-4" checked={!!settings.EMAIL_TRACK_OPENS} onChange={(e) => update('EMAIL_TRACK_OPENS', e.target.checked)} />
+                      <input id="EMAIL_TRACK_OPENS" type="checkbox" className="h-4 w-4" checked={!!settings?.EMAIL_TRACK_OPENS} onChange={(e) => update('EMAIL_TRACK_OPENS', e.target.checked)} />
                       <Label htmlFor="EMAIL_TRACK_OPENS">Track Opens</Label>
                     </div>
                     <div className="flex items-center gap-3">
-                      <input id="EMAIL_TRACK_CLICKS" type="checkbox" className="h-4 w-4" checked={!!settings.EMAIL_TRACK_CLICKS} onChange={(e) => update('EMAIL_TRACK_CLICKS', e.target.checked)} />
+                      <input id="EMAIL_TRACK_CLICKS" type="checkbox" className="h-4 w-4" checked={!!settings?.EMAIL_TRACK_CLICKS} onChange={(e) => update('EMAIL_TRACK_CLICKS', e.target.checked)} />
                       <Label htmlFor="EMAIL_TRACK_CLICKS">Track Clicks</Label>
                     </div>
                   </div>
@@ -556,41 +556,41 @@ export default function AdminSystemSettingsPage() {
               )}
 
               {/* Brevo API Options */}
-              {settings.EMAIL_PROVIDER === 'BREVO' && (
+              {settings?.EMAIL_PROVIDER === 'BREVO' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                   <div>
                     <Label htmlFor="BREVO_API_KEY">Brevo API Key</Label>
-                    <Input id="BREVO_API_KEY" type="password" value={settings.BREVO_API_KEY || ''} onChange={(e) => update('BREVO_API_KEY', e.target.value)} placeholder="xkeysib_..." />
+                    <Input id="BREVO_API_KEY" type="password" value={settings?.BREVO_API_KEY || ''} onChange={(e) => update('BREVO_API_KEY', e.target.value)} placeholder="xkeysib_..." />
                     <p className="text-xs text-gray-500 mt-1">Emails will be sent via Brevo REST API over HTTPS (port 443). Enter "__SECRET__" to keep the current key unchanged.</p>
                   </div>
                 </div>
               )}
 
               {/* SMTP Options */}
-              {settings.EMAIL_PROVIDER === 'SMTP' && (
+              {settings?.EMAIL_PROVIDER === 'SMTP' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                   <div>
                     <Label htmlFor="EMAIL_HOST">SMTP Host</Label>
-                    <Input id="EMAIL_HOST" value={settings.EMAIL_HOST || ''} onChange={(e) => update('EMAIL_HOST', e.target.value)} placeholder="smtp-relay.brevo.com" />
+                    <Input id="EMAIL_HOST" value={settings?.EMAIL_HOST || ''} onChange={(e) => update('EMAIL_HOST', e.target.value)} placeholder="smtp-relay.brevo.com" />
                   </div>
                   <div>
                     <Label htmlFor="EMAIL_PORT">SMTP Port</Label>
-                    <Input id="EMAIL_PORT" type="number" step="1" value={Number(settings.EMAIL_PORT ?? 587)} onChange={(e) => update('EMAIL_PORT', parseInt(e.target.value || '0'))} />
+                    <Input id="EMAIL_PORT" type="number" step="1" value={Number(settings?.EMAIL_PORT ?? 587)} onChange={(e) => update('EMAIL_PORT', parseInt(e.target.value || '0'))} />
                   </div>
                   <div className="flex items-center gap-3">
-                    <input id="EMAIL_SECURE" type="checkbox" className="h-4 w-4" checked={!!settings.EMAIL_SECURE} onChange={(e) => update('EMAIL_SECURE', e.target.checked)} />
+                    <input id="EMAIL_SECURE" type="checkbox" className="h-4 w-4" checked={!!settings?.EMAIL_SECURE} onChange={(e) => update('EMAIL_SECURE', e.target.checked)} />
                     <Label htmlFor="EMAIL_SECURE">Use TLS/SSL (secure)</Label>
                   </div>
                   {isBrevoHost ? (
                     <>
                       <div>
                         <Label htmlFor="EMAIL_USER">Username</Label>
-                        <Input id="EMAIL_USER" value={settings.EMAIL_USER || ''} onChange={(e) => update('EMAIL_USER', e.target.value)} placeholder="apikey or your@email" />
+                        <Input id="EMAIL_USER" value={settings?.EMAIL_USER || ''} onChange={(e) => update('EMAIL_USER', e.target.value)} placeholder="apikey or your@email" />
                         <p className="text-xs text-gray-500 mt-1">Brevo SMTP usually accepts username <code className="font-mono">apikey</code> or your account email.</p>
                       </div>
                       <div>
                         <Label htmlFor="BREVO_API_KEY">Brevo API Key</Label>
-                        <Input id="BREVO_API_KEY" type="password" value={settings.BREVO_API_KEY || ''} onChange={(e) => update('BREVO_API_KEY', e.target.value)} placeholder="xkeysib_..." />
+                        <Input id="BREVO_API_KEY" type="password" value={settings?.BREVO_API_KEY || ''} onChange={(e) => update('BREVO_API_KEY', e.target.value)} placeholder="xkeysib_..." />
                         <p className="text-xs text-gray-500 mt-1">Used as the SMTP password. Enter "__SECRET__" to keep the current value unchanged.</p>
                       </div>
                     </>
@@ -598,26 +598,26 @@ export default function AdminSystemSettingsPage() {
                     <>
                       <div>
                         <Label htmlFor="EMAIL_USER">Username</Label>
-                        <Input id="EMAIL_USER" value={settings.EMAIL_USER || ''} onChange={(e) => update('EMAIL_USER', e.target.value)} placeholder="your@email.com" />
+                        <Input id="EMAIL_USER" value={settings?.EMAIL_USER || ''} onChange={(e) => update('EMAIL_USER', e.target.value)} placeholder="your@email.com" />
                       </div>
                       <div>
                         <Label htmlFor="EMAIL_PASSWORD">Password</Label>
-                        <Input id="EMAIL_PASSWORD" type="password" value={settings.EMAIL_PASSWORD || ''} onChange={(e) => update('EMAIL_PASSWORD', e.target.value)} placeholder="SMTP password" />
+                        <Input id="EMAIL_PASSWORD" type="password" value={settings?.EMAIL_PASSWORD || ''} onChange={(e) => update('EMAIL_PASSWORD', e.target.value)} placeholder="SMTP password" />
                         <p className="text-xs text-gray-500 mt-1">Enter "__SECRET__" to keep the existing value unchanged.</p>
                       </div>
                     </>
                   )}
                   <div>
                     <Label htmlFor="EMAIL_CONNECTION_TIMEOUT_MS">Connection Timeout (ms)</Label>
-                    <Input id="EMAIL_CONNECTION_TIMEOUT_MS" type="number" step="1" value={Number(settings.EMAIL_CONNECTION_TIMEOUT_MS ?? 10000)} onChange={(e) => update('EMAIL_CONNECTION_TIMEOUT_MS', parseInt(e.target.value || '0'))} />
+                    <Input id="EMAIL_CONNECTION_TIMEOUT_MS" type="number" step="1" value={Number(settings?.EMAIL_CONNECTION_TIMEOUT_MS ?? 10000)} onChange={(e) => update('EMAIL_CONNECTION_TIMEOUT_MS', parseInt(e.target.value || '0'))} />
                   </div>
                   <div>
                     <Label htmlFor="EMAIL_GREETING_TIMEOUT_MS">Greeting Timeout (ms)</Label>
-                    <Input id="EMAIL_GREETING_TIMEOUT_MS" type="number" step="1" value={Number(settings.EMAIL_GREETING_TIMEOUT_MS ?? 10000)} onChange={(e) => update('EMAIL_GREETING_TIMEOUT_MS', parseInt(e.target.value || '0'))} />
+                    <Input id="EMAIL_GREETING_TIMEOUT_MS" type="number" step="1" value={Number(settings?.EMAIL_GREETING_TIMEOUT_MS ?? 10000)} onChange={(e) => update('EMAIL_GREETING_TIMEOUT_MS', parseInt(e.target.value || '0'))} />
                   </div>
                   <div>
                     <Label htmlFor="EMAIL_SOCKET_TIMEOUT_MS">Socket Timeout (ms)</Label>
-                    <Input id="EMAIL_SOCKET_TIMEOUT_MS" type="number" step="1" value={Number(settings.EMAIL_SOCKET_TIMEOUT_MS ?? 20000)} onChange={(e) => update('EMAIL_SOCKET_TIMEOUT_MS', parseInt(e.target.value || '0'))} />
+                    <Input id="EMAIL_SOCKET_TIMEOUT_MS" type="number" step="1" value={Number(settings?.EMAIL_SOCKET_TIMEOUT_MS ?? 20000)} onChange={(e) => update('EMAIL_SOCKET_TIMEOUT_MS', parseInt(e.target.value || '0'))} />
                   </div>
                 </div>
               )}
@@ -700,9 +700,9 @@ export default function AdminSystemSettingsPage() {
           </div>
           {preview && (
             <div className="mt-6">
-              <div className="mb-2 text-sm text-gray-600 dark:text-gray-300">Subject: <span className="font-medium">{preview.subject}</span></div>
+              <div className="mb-2 text-sm text-gray-600 dark:text-gray-300">Subject: <span className="font-medium">{preview?.subject}</span></div>
               <div className="border rounded overflow-hidden h-[600px]">
-                <iframe title="Email Preview" className="w-full h-full" srcDoc={preview.html} />
+                <iframe title="Email Preview" className="w-full h-full" srcDoc={preview?.html} />
               </div>
             </div>
           )}
