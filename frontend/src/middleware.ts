@@ -64,6 +64,7 @@ export async function middleware(request: NextRequest) {
 
   // Public routes that don't require authentication
   const publicRoutes = [
+    '/', // homepage is public
     '/login',
     '/register', 
     '/forgot-password',
@@ -79,7 +80,7 @@ export async function middleware(request: NextRequest) {
   ]
 
   // Check if the route is public
-  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
+  const isPublicRoute = publicRoutes.some(route => route === '/' ? pathname === '/' : pathname.startsWith(route))
 
   // Maintenance mode check (from backend public config)
   let maintenanceMode = false
