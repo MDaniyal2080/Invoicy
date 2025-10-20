@@ -145,9 +145,29 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
+    if (token && (pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password'))) {
+      const redirectTo = url.searchParams.get('redirect') || '/dashboard'
+      try {
+        const dest = redirectTo.startsWith('/') ? new URL(redirectTo, request.url) : new URL('/dashboard', request.url)
+        return NextResponse.redirect(dest)
+      } catch {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
+    }
+
     // Everything else goes to maintenance
     const dest = new URL('/maintenance', request.url)
     return NextResponse.redirect(dest)
+  }
+
+  if (token && (pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password'))) {
+    const redirectTo = url.searchParams.get('redirect') || '/dashboard'
+    try {
+      const dest = redirectTo.startsWith('/') ? new URL(redirectTo, request.url) : new URL('/dashboard', request.url)
+      return NextResponse.redirect(dest)
+    } catch {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
   }
 
   // If accessing a public route, allow it
@@ -200,10 +220,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // If authenticated but trying to access auth pages, redirect to verification check
-  if (token && (pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password'))) {
-    return NextResponse.redirect(new URL('/email-verification', request.url))
-  }
+  
 
   return NextResponse.next()
 }

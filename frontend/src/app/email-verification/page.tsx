@@ -19,7 +19,6 @@ export default function EmailVerificationPage() {
   const [countdown, setCountdown] = useState(0)
 
   useEffect(() => {
-    // If the link included a token as a query, send to dynamic verify route first
     const t = searchParams.get('token')
     if (t) {
       if (typeof window !== 'undefined') {
@@ -29,9 +28,16 @@ export default function EmailVerificationPage() {
       }
       return
     }
-    // If no user and no token in query, redirect to login
     if (!user) {
-      router.push('/login')
+      try {
+        const hasCookie = typeof document !== 'undefined' && document.cookie.split('; ').some((c) => c.startsWith('access_token='))
+        const storageToken = typeof window !== 'undefined' ? (localStorage.getItem('access_token') || sessionStorage.getItem('access_token')) : null
+        if (!hasCookie && !storageToken) {
+          router.push('/login')
+        }
+      } catch {
+        router.push('/login')
+      }
       return
     }
   }, [user, router, searchParams])
@@ -146,7 +152,7 @@ export default function EmailVerificationPage() {
           <div className="space-y-3">
             {user?.emailVerified && (
               <Button
-                onClick={() => router.push('/dashboard')}
+                onClick={() => router.push('/dashboard?fromVerify=1')}
                 className="w-full bg-gradient-to-r from-emerald-500 to-indigo-500 hover:from-emerald-600 hover:to-indigo-600"
               >
                 Continue to Dashboard
