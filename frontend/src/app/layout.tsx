@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Roboto_Mono } from "next/font/google";
+import { Space_Grotesk, Roboto_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { StoreProvider } from "@/components/providers/store-provider";
@@ -8,7 +8,7 @@ import { NotificationToast } from "@/components/ui/notification-toast";
 import { GlobalLoading } from "@/components/ui/global-loading";
 import { MaintenanceBanner } from "@/components/ui/maintenance-banner";
 
-const geistSans = Inter({ subsets: ["latin"], variable: "--font-geist-sans" });
+const geistSans = Space_Grotesk({ subsets: ["latin"], variable: "--font-geist-sans" });
 const geistMono = Roboto_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {

@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Eye, EyeOff, Loader2, Check, X, ArrowRight, ArrowLeft } from 'lucide-react'
 import { useAuthStore } from '@/lib/stores/auth-store'
 import { toast } from 'sonner'
+import { FrontInfoCallout, FrontPageShell, FrontPalette } from '@/components/ui/front-page-shell'
+import { SiteBrand } from '@/components/ui/site-brand'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -38,14 +39,26 @@ export default function RegisterPage() {
     hasSpecialChar: false,
   })
 
+  const passwordRulesFor = (password: string) => ({
+    hasMinLength: password.length >= 8,
+    hasUpperCase: /[A-Z]/.test(password),
+    hasLowerCase: /[a-z]/.test(password),
+    hasNumber: /\d/.test(password),
+    hasSpecialChar: /[!@#$%^&*]/.test(password),
+  })
+
+  const passwordValidationErrorFor = (password: string) => {
+    const rules = passwordRulesFor(password)
+    if (!rules.hasMinLength) return 'Password must be at least 8 characters'
+    if (!rules.hasUpperCase) return 'Password must contain at least one uppercase letter'
+    if (!rules.hasLowerCase) return 'Password must contain at least one lowercase letter'
+    if (!rules.hasNumber) return 'Password must contain at least one number'
+    if (!rules.hasSpecialChar) return 'Password must contain at least one special character (!@#$%^&*)'
+    return null
+  }
+
   const checkPasswordStrength = (password: string) => {
-    setPasswordStrength({
-      hasMinLength: password.length >= 8,
-      hasUpperCase: /[A-Z]/.test(password),
-      hasLowerCase: /[a-z]/.test(password),
-      hasNumber: /\d/.test(password),
-      hasSpecialChar: /[!@#$%^&*]/.test(password),
-    })
+    setPasswordStrength(passwordRulesFor(password))
   }
 
   const handlePasswordChange = (password: string) => {
@@ -62,11 +75,13 @@ export default function RegisterPage() {
         setError('Please enter a valid email address')
         return
       }
-      const isPasswordStrong = Object.values(passwordStrength).every(Boolean)
-      if (!isPasswordStrong) {
-        setError('Password does not meet requirements')
+
+      const passwordError = passwordValidationErrorFor(formData.password)
+      if (passwordError) {
+        setError(passwordError)
         return
       }
+
       if (formData.password !== formData.confirmPassword) {
         setError('Passwords do not match')
         return
@@ -100,9 +115,10 @@ export default function RegisterPage() {
     }
     
     // Validate password strength
-    const isPasswordStrong = Object.values(passwordStrength).every(Boolean)
-    if (!isPasswordStrong) {
-      setError('Password does not meet requirements')
+    const passwordError = passwordValidationErrorFor(formData.password)
+    if (passwordError) {
+      setError(passwordError)
+      setCurrentStep(1)
       return
     }
     
@@ -326,28 +342,36 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className="glass-card hover-lift animate-fade-in">
-      <CardHeader className="space-y-3 text-center">
-        <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl flex items-center justify-center mb-2">
-          <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">{currentStep}</span>
-          </div>
+    <FrontPageShell
+      title={<SiteBrand />}
+      description="Tech-Forward Dark Mode"
+    >
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold">Create an account</h2>
+          <p className="text-sm text-slate-600">
+            Step {currentStep} of 3 - {currentStep === 1 ? 'Account Details' : currentStep === 2 ? 'Personal Information' : 'Company Information'}
+          </p>
         </div>
-        <CardTitle className="text-3xl font-bold text-gradient">Create an account</CardTitle>
-        <CardDescription className="text-muted-foreground text-lg">
-          Step {currentStep} of 3 - {currentStep === 1 ? 'Account Details' : currentStep === 2 ? 'Personal Information' : 'Company Information'}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-8">
+
+        <FrontPalette />
+
+        <FrontInfoCallout>
+          <div className="space-y-1">
+            <div className="font-semibold">Font: Space Grotesk (Modern, tech feel)</div>
+            <div className="font-semibold">Best for: Tech companies, modern startups</div>
+          </div>
+        </FrontInfoCallout>
+
+        <div>
           <div className="flex items-center justify-between">
             {[1, 2, 3].map((step) => (
               <div key={step} className="flex items-center">
                 <div
                   className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-300 ${
                     step <= currentStep
-                      ? 'border-primary bg-gradient-to-r from-primary to-secondary text-white shadow-glow'
-                      : 'border-muted bg-background text-muted-foreground'
+                      ? 'border-[#0f0c29] bg-[#0f0c29] text-white'
+                      : 'border-slate-200 bg-white text-slate-500'
                   }`}
                 >
                   {step < currentStep ? (
@@ -359,7 +383,7 @@ export default function RegisterPage() {
                 {step < 3 && (
                   <div
                     className={`ml-3 h-1 w-16 sm:w-20 rounded-full transition-all duration-300 ${
-                      step < currentStep ? 'bg-gradient-to-r from-primary to-secondary' : 'bg-muted'
+                      step < currentStep ? 'bg-[#0f0c29]' : 'bg-slate-200'
                     }`}
                   />
                 )}
@@ -373,15 +397,15 @@ export default function RegisterPage() {
           {error && currentStep !== 1 && (
             <p className="text-sm text-red-600">{error}</p>
           )}
-          
-          <div className="flex justify-between pt-6">
+
+          <div className="flex justify-between pt-2">
             {currentStep > 1 && (
               <Button
                 type="button"
                 variant="outline"
                 onClick={handlePreviousStep}
                 disabled={isLoading}
-                className="h-12 px-6 hover-lift shadow-soft"
+                className="h-11 px-5"
               >
                 <ArrowLeft className="mr-2 h-5 w-5" />
                 Previous
@@ -392,7 +416,7 @@ export default function RegisterPage() {
                 type="button"
                 onClick={handleNextStep}
                 disabled={isLoading}
-                className={`h-12 px-8 gradient-primary hover-lift shadow-medium text-white font-semibold ${currentStep === 1 ? 'w-full' : 'ml-auto'}`}
+                className={`h-11 px-6 bg-[#0f0c29] hover:bg-[#302b63] text-white ${currentStep === 1 ? 'w-full' : 'ml-auto'}`}
               >
                 Next
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -401,7 +425,7 @@ export default function RegisterPage() {
               <Button
                 type="submit"
                 disabled={isLoading || !formData.agreedToTerms}
-                className="h-12 px-8 ml-auto gradient-primary hover-lift shadow-medium text-white font-semibold"
+                className="h-11 px-6 ml-auto bg-[#0f0c29] hover:bg-[#302b63] text-white"
               >
                 {isLoading ? (
                   <>
@@ -415,18 +439,14 @@ export default function RegisterPage() {
             )}
           </div>
         </form>
-      </CardContent>
-      <CardFooter>
-        <p className="text-center text-sm text-muted-foreground w-full">
-          Already have an account?{' '}
-          <Link
-            href="/login"
-            className="font-semibold text-primary hover:underline"
-          >
+
+        <div className="text-center text-sm">
+          <span className="text-slate-600">Already have an account? </span>
+          <Link href="/login" className="text-slate-900 font-semibold underline-offset-4 hover:underline">
             Sign in
           </Link>
-        </p>
-      </CardFooter>
-    </Card>
+        </div>
+      </div>
+    </FrontPageShell>
   )
 }

@@ -86,6 +86,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       path: request.url,
     };
 
+    if (exception instanceof HttpException) {
+      try {
+        const raw = exception.getResponse() as unknown;
+        if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+          Object.assign(payload, raw);
+          payload.statusCode = status;
+          payload.timestamp = payload.timestamp || new Date().toISOString();
+          payload.path = request.url;
+        }
+      } catch {}
+    }
+
     response.status(status).json(payload);
   }
 }

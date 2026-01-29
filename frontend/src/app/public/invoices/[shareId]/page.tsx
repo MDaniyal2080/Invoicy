@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Download, CreditCard, Building2, Calendar, Hash, DollarSign, FileText, CheckCircle, Clock, AlertCircle } from "lucide-react"
 import { getErrorMessage } from "@/lib/utils"
+import { useFrontPageLightMode } from "@/components/ui/front-page-shell"
 
 type APIError = { response?: { data?: { message?: string } } }
 
@@ -27,6 +28,7 @@ const statusColors: Record<InvoiceStatus, 'default' | 'secondary' | 'destructive
 }
 
 export default function PublicInvoicePage() {
+  useFrontPageLightMode(true)
   const params = useParams()
   const shareId = (params?.shareId as string) || ''
   const searchParams = useSearchParams()
@@ -163,26 +165,26 @@ export default function PublicInvoicePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/30">
+    <div className="min-h-screen bg-front-page">
       {/* Header with branding */}
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200/50 dark:border-slate-700/50 sticky top-0 z-10">
+      <div className="bg-front-gradient border-b border-white/10 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-front-gradient rounded-xl flex items-center justify-center shadow-lg transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-xl">
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-xl font-bold text-white">
                   Invoicy
                 </h1>
-                <p className="text-xs text-muted-foreground">Professional Invoicing</p>
+                <p className="text-xs text-white/70">Professional Invoicing</p>
               </div>
             </div>
             <Button
               variant="outline"
               size="sm"
-              className="gap-2 hover:bg-slate-50 dark:hover:bg-slate-800"
+              className="gap-2 border-white/30 text-white hover:bg-white/10 transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-lg"
               onClick={() => window.print()}
             >
               <Download className="w-4 h-4" />
@@ -192,9 +194,9 @@ export default function PublicInvoicePage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8 animate-fade-in">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8 motion-safe:animate-fade-in">
         {/* Invoice Header */}
-        <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 sm:p-8 shadow-xl shadow-slate-200/20 dark:shadow-slate-900/20">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xl shadow-slate-200/20 transition-all duration-300 motion-safe:animate-fade-in-up hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-200/30">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
             <div className="space-y-4">
               <div className="space-y-2">
@@ -202,11 +204,11 @@ export default function PublicInvoicePage() {
                   <Hash className="w-5 h-5 text-muted-foreground" />
                   <span className="text-sm font-medium text-muted-foreground">Invoice Number</span>
                 </div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#0f0c29]">
                   {inv.invoiceNumber || inv.id}
                 </h1>
               </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex items-center gap-2 text-slate-600">
                 <Calendar className="w-4 h-4" />
                 <span className="text-sm">
                   Issued: {inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString('en-US', { 
@@ -217,7 +219,7 @@ export default function PublicInvoicePage() {
                 </span>
               </div>
               {inv.dueDate && (
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="flex items-center gap-2 text-slate-600">
                   <Clock className="w-4 h-4" />
                   <span className="text-sm">
                     Due: {new Date(inv.dueDate).toLocaleDateString('en-US', { 
@@ -230,8 +232,8 @@ export default function PublicInvoicePage() {
               )}
               {/* Payment return verification hint */}
               {verifyingOnReturn && (
-                <div className="text-xs text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md px-3 py-2 inline-flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-3 w-3 border-2 border-blue-300 border-t-blue-600"></div>
+                <div className="text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-md px-3 py-2 inline-flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-3 w-3 border-2 border-slate-300 border-t-slate-700"></div>
                   Verifying your payment...
                 </div>
               )}
@@ -247,12 +249,12 @@ export default function PublicInvoicePage() {
               </Badge>
               
               <div className="text-right space-y-1">
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                <p className="text-2xl font-bold text-[#0f0c29]">
                   {formatCurrency(inv.totalAmount, inv.currency)}
                 </p>
                 {(inv.balanceDue || 0) > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    Balance Due: <span className="font-semibold text-orange-600 dark:text-orange-400">
+                  <p className="text-sm text-slate-600">
+                    Balance Due: <span className="font-semibold text-orange-600">
                       {formatCurrency(inv.balanceDue, inv.currency)}
                     </span>
                   </p>
@@ -261,7 +263,7 @@ export default function PublicInvoicePage() {
               
               {(inv.status !== 'PAID' && inv.status !== 'CANCELLED' && (inv.balanceDue || 0) > 0) && (
                 <Button
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                  className="bg-[#0f0c29] hover:bg-[#302b63] text-white font-semibold px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
                   onClick={() => {
                     setShowPayForm(true)
                     // Scroll to payment section after a brief delay to ensure it's rendered
@@ -286,64 +288,64 @@ export default function PublicInvoicePage() {
           {/* Left Column - Client & Items */}
           <div className="xl:col-span-2 space-y-8">
             {/* Client Information */}
-            <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 shadow-lg">
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg transition-all duration-300 motion-safe:animate-fade-in-up motion-safe:[animation-delay:80ms] motion-safe:[animation-fill-mode:backwards] hover:-translate-y-1 hover:shadow-xl">
               <div className="flex items-center gap-3 mb-6">
-                <Building2 className="w-5 h-5 text-blue-600" />
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Bill To</h2>
+                <Building2 className="w-5 h-5 text-[#0f0c29]" />
+                <h2 className="text-xl font-semibold text-[#0f0c29]">Bill To</h2>
               </div>
               
               <div className="flex items-start gap-4">
-                <Avatar className="h-14 w-14 ring-2 ring-blue-200 dark:ring-blue-800 shadow-md">
-                  <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold text-lg">
+                <Avatar className="h-14 w-14 ring-2 ring-slate-200 shadow-md">
+                  <AvatarFallback className="bg-front-gradient text-white font-bold text-lg">
                     {clientInitials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                  <h3 className="text-xl font-semibold text-[#0f0c29] mb-1">
                     {inv.client?.name || 'Unknown Client'}
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-400 break-words mb-3">{inv.client?.email || ''}</p>
+                  <p className="text-slate-600 break-words mb-3">{inv.client?.email || ''}</p>
                   {/* Address omitted because client model does not include address */}
                 </div>
               </div>
             </div>
 
             {/* Invoice Items */}
-            <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 shadow-lg">
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg transition-all duration-300 motion-safe:animate-fade-in-up motion-safe:[animation-delay:140ms] motion-safe:[animation-fill-mode:backwards] hover:-translate-y-1 hover:shadow-xl">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-blue-600" />
-                  <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Invoice Items</h2>
+                  <FileText className="w-5 h-5 text-[#0f0c29]" />
+                  <h2 className="text-xl font-semibold text-[#0f0c29]">Invoice Items</h2>
                 </div>
                 <Badge variant="outline" className="px-3 py-1">
                   {inv.items?.length || 0} items
                 </Badge>
               </div>
               
-              <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+              <div className="overflow-hidden rounded-xl border border-slate-200">
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-slate-50 dark:bg-slate-800/50">
+                    <thead className="bg-slate-50">
                       <tr>
-                        <th className="px-3 py-3 sm:px-6 sm:py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">Description</th>
-                        <th className="px-3 py-3 sm:px-6 sm:py-4 text-center text-sm font-semibold text-slate-700 dark:text-slate-300">Qty</th>
-                        <th className="px-3 py-3 sm:px-6 sm:py-4 text-right text-sm font-semibold text-slate-700 dark:text-slate-300">Rate</th>
-                        <th className="px-3 py-3 sm:px-6 sm:py-4 text-right text-sm font-semibold text-slate-700 dark:text-slate-300">Amount</th>
+                        <th className="px-3 py-3 sm:px-6 sm:py-4 text-left text-sm font-semibold text-slate-700">Description</th>
+                        <th className="px-3 py-3 sm:px-6 sm:py-4 text-center text-sm font-semibold text-slate-700">Qty</th>
+                        <th className="px-3 py-3 sm:px-6 sm:py-4 text-right text-sm font-semibold text-slate-700">Rate</th>
+                        <th className="px-3 py-3 sm:px-6 sm:py-4 text-right text-sm font-semibold text-slate-700">Amount</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-slate-900/50 divide-y divide-slate-200 dark:divide-slate-700">
+                    <tbody className="bg-white divide-y divide-slate-200">
                       {(inv.items || []).map((item: InvoiceItem, idx: number) => (
-                        <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                        <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-3 py-3 sm:px-6 sm:py-4">
-                            <div className="font-medium text-slate-900 dark:text-slate-100 break-words">{item.description}</div>
+                            <div className="font-medium text-slate-900 break-words">{item.description}</div>
                           </td>
-                          <td className="px-3 py-3 sm:px-6 sm:py-4 text-center text-slate-600 dark:text-slate-400">
+                          <td className="px-3 py-3 sm:px-6 sm:py-4 text-center text-slate-600">
                             {item.quantity}
                           </td>
-                          <td className="px-3 py-3 sm:px-6 sm:py-4 text-right text-slate-600 dark:text-slate-400">
+                          <td className="px-3 py-3 sm:px-6 sm:py-4 text-right text-slate-600">
                             {formatCurrency(item.rate, inv.currency)}
                           </td>
-                          <td className="px-3 py-3 sm:px-6 sm:py-4 text-right font-semibold text-slate-900 dark:text-slate-100">
+                          <td className="px-3 py-3 sm:px-6 sm:py-4 text-right font-semibold text-slate-900">
                             {formatCurrency((item.quantity || 0) * (item.rate || 0), inv.currency)}
                           </td>
                         </tr>
@@ -358,24 +360,24 @@ export default function PublicInvoicePage() {
           {/* Right Column - Summary & Payment */}
           <div className="space-y-8">
             {/* Invoice Summary */}
-            <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 shadow-lg">
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg transition-all duration-300 motion-safe:animate-fade-in-up motion-safe:[animation-delay:220ms] motion-safe:[animation-fill-mode:backwards] hover:-translate-y-1 hover:shadow-xl">
               <div className="flex items-center gap-3 mb-6">
                 <DollarSign className="w-5 h-5 text-green-600" />
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Summary</h2>
+                <h2 className="text-xl font-semibold text-[#0f0c29]">Summary</h2>
               </div>
               
               <div className="space-y-4">
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-slate-600 dark:text-slate-400">Subtotal</span>
-                  <span className="font-medium text-slate-900 dark:text-slate-100">
+                  <span className="text-slate-600">Subtotal</span>
+                  <span className="font-medium text-slate-900">
                     {formatCurrency(inv.subtotal, inv.currency)}
                   </span>
                 </div>
                 
                 {(inv.taxRate || 0) > 0 && (
                   <div className="flex items-center justify-between py-2">
-                    <span className="text-slate-600 dark:text-slate-400">Tax ({inv.taxRate}%)</span>
-                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                    <span className="text-slate-600">Tax ({inv.taxRate}%)</span>
+                    <span className="font-medium text-slate-900">
                       {formatCurrency(inv.taxAmount, inv.currency)}
                     </span>
                   </div>
@@ -383,10 +385,10 @@ export default function PublicInvoicePage() {
                 
                 {(inv.discount || 0) > 0 && (
                   <div className="flex items-center justify-between py-2">
-                    <span className="text-slate-600 dark:text-slate-400">
+                    <span className="text-slate-600">
                       Discount {inv.discountType === 'PERCENTAGE' ? `(${inv.discount}%)` : ''}
                     </span>
-                    <span className="font-medium text-green-600 dark:text-green-400">
+                    <span className="font-medium text-green-600">
                       -{inv.discountType === 'PERCENTAGE' 
                         ? `${inv.discount}%` 
                         : formatCurrency(inv.discount, inv.currency)}
@@ -394,27 +396,27 @@ export default function PublicInvoicePage() {
                   </div>
                 )}
                 
-                <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+                <div className="border-t border-slate-200 pt-4">
                   <div className="flex items-center justify-between py-2">
-                    <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">Total</span>
-                    <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                    <span className="text-lg font-semibold text-[#0f0c29]">Total</span>
+                    <span className="text-2xl font-bold text-[#0f0c29]">
                       {formatCurrency(inv.totalAmount, inv.currency)}
                     </span>
                   </div>
                   
                   {(inv.paidAmount || 0) > 0 && (
                     <div className="flex items-center justify-between py-2">
-                      <span className="text-slate-600 dark:text-slate-400">Paid</span>
-                      <span className="font-medium text-green-600 dark:text-green-400">
+                      <span className="text-slate-600">Paid</span>
+                      <span className="font-medium text-green-600">
                         {formatCurrency(inv.paidAmount, inv.currency)}
                       </span>
                     </div>
                   )}
                   
                   {(inv.balanceDue || 0) > 0 && (
-                    <div className="flex items-center justify-between py-2 bg-orange-50 dark:bg-orange-950/20 -mx-4 px-4 rounded-lg">
-                      <span className="font-semibold text-orange-700 dark:text-orange-300">Balance Due</span>
-                      <span className="text-xl font-bold text-orange-700 dark:text-orange-300">
+                    <div className="flex items-center justify-between py-2 bg-orange-50 -mx-4 px-4 rounded-lg">
+                      <span className="font-semibold text-orange-700">Balance Due</span>
+                      <span className="text-xl font-bold text-orange-700">
                         {formatCurrency(inv.balanceDue, inv.currency)}
                       </span>
                     </div>
@@ -427,42 +429,45 @@ export default function PublicInvoicePage() {
 
         {/* Payment Section - Moved outside the grid */}
         {(inv.status !== 'PAID' && inv.status !== 'CANCELLED' && (inv.balanceDue || 0) > 0 && (showPayForm || result)) && (
-          <div id="payment-section" className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 px-6 py-4 border-b border-slate-200/50 dark:border-slate-700/50">
+          <div
+            id="payment-section"
+            className="bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden transition-all duration-300 motion-safe:animate-fade-in-up motion-safe:[animation-delay:300ms] motion-safe:[animation-fill-mode:backwards] hover:-translate-y-1 hover:shadow-xl"
+          >
+            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
               <div className="flex items-center gap-3">
-                <CreditCard className="w-5 h-5 text-blue-600" />
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Payment Options</h2>
+                <CreditCard className="w-5 h-5 text-[#0f0c29]" />
+                <h2 className="text-xl font-semibold text-[#0f0c29]">Payment Options</h2>
               </div>
             </div>
             <div className="p-6">
                 {result ? (
                   <div className="space-y-4">
                     <div className={`p-6 rounded-xl border-2 ${result.success 
-                      ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800' 
-                      : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+                      ? 'bg-green-50 border-green-200' 
+                      : 'bg-red-50 border-red-200'
                     }`}>
                       <div className="flex items-center gap-3 mb-2">
                         {result.success ? (
-                          <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                          <CheckCircle className="w-6 h-6 text-green-600" />
                         ) : (
-                          <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                          <AlertCircle className="w-6 h-6 text-red-600" />
                         )}
                         <h3 className={`text-lg font-semibold ${result.success 
-                          ? 'text-green-800 dark:text-green-200' 
-                          : 'text-red-800 dark:text-red-200'
+                          ? 'text-green-800' 
+                          : 'text-red-800'
                         }`}>
                           {result.success ? 'Payment Successful!' : 'Payment Failed'}
                         </h3>
                       </div>
                       <p className={`text-sm mb-3 ${result.success 
-                        ? 'text-green-700 dark:text-green-300' 
-                        : 'text-red-700 dark:text-red-300'
+                        ? 'text-green-700' 
+                        : 'text-red-700'
                       }`}>
                         {result.message}
                       </p>
                       {result.transactionId && (
-                        <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3">
-                          <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">Transaction ID</p>
+                        <div className="bg-white/60 rounded-lg p-3">
+                          <p className="text-xs text-slate-600 mb-1">Transaction ID</p>
                           <p className="font-mono text-sm font-medium">{result.transactionId}</p>
                         </div>
                       )}
@@ -484,7 +489,7 @@ export default function PublicInvoicePage() {
                         Refresh Invoice
                       </Button>
                       <Button
-                        className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                        className="flex-1 bg-[#0f0c29] hover:bg-[#302b63] text-white"
                         onClick={() => setResult(null)}
                       >
                         Make Another Payment
@@ -494,29 +499,29 @@ export default function PublicInvoicePage() {
                 ) : (
                   <div className="text-center">
                     <div className="inline-flex items-center gap-3 mb-6">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <div className="w-12 h-12 bg-front-gradient rounded-xl flex items-center justify-center shadow-lg">
                         <CreditCard className="w-6 h-6 text-white" />
                       </div>
                       <div className="text-left">
-                        <h3 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Secure Payment</h3>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">Powered by Stripe</p>
+                        <h3 className="text-2xl font-semibold text-slate-900">Secure Payment</h3>
+                        <p className="text-sm text-slate-600">Powered by Stripe</p>
                       </div>
                     </div>
                     
-                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-2xl border border-blue-200 dark:border-blue-800 p-8">
+                    <div className="bg-slate-50 rounded-2xl border border-slate-200 p-8">
                       <div className="text-center space-y-6">
-                        <div className="text-4xl font-bold text-slate-900 dark:text-slate-100">
+                        <div className="text-4xl font-bold text-[#0f0c29]">
                           {formatCurrency(inv.balanceDue, inv.currency)}
                         </div>
-                        <p className="text-slate-600 dark:text-slate-400 max-w-lg mx-auto text-lg">
+                        <p className="text-slate-600 max-w-lg mx-auto text-lg">
                           Your payment is secured with industry-standard encryption. Card details are never stored on our servers.
                         </p>
                         
                         {stripeError && (
-                          <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-xl p-4 max-w-md mx-auto">
+                          <div className="bg-red-50 border border-red-200 rounded-xl p-4 max-w-md mx-auto">
                             <div className="flex items-center gap-2">
-                              <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
-                              <p className="text-sm text-red-700 dark:text-red-300">{stripeError}</p>
+                              <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                              <p className="text-sm text-red-700">{stripeError}</p>
                             </div>
                           </div>
                         )}
@@ -531,7 +536,7 @@ export default function PublicInvoicePage() {
                           </Button>
                           <Button
                             size="lg"
-                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-12 py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 text-lg"
+                            className="bg-[#0f0c29] hover:bg-[#302b63] text-white font-semibold px-12 py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 text-lg"
                             disabled={isStripeRedirecting || !inv || (inv.balanceDue || 0) <= 0}
                             onClick={async () => {
                               try {
@@ -574,18 +579,18 @@ export default function PublicInvoicePage() {
 
         {/* Notes Section */}
         {(inv.notes || inv.terms) && (
-          <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 shadow-lg">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg transition-all duration-300 motion-safe:animate-fade-in-up motion-safe:[animation-delay:360ms] motion-safe:[animation-fill-mode:backwards] hover:-translate-y-1 hover:shadow-xl">
             <div className="space-y-4">
               {inv.notes && (
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Notes</h3>
-                  <p className="text-slate-600 dark:text-slate-400 whitespace-pre-wrap break-words">{inv.notes}</p>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">Notes</h3>
+                  <p className="text-slate-600 whitespace-pre-wrap break-words">{inv.notes}</p>
                 </div>
               )}
               {inv.terms && (
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Terms & Conditions</h3>
-                  <p className="text-slate-600 dark:text-slate-400 whitespace-pre-wrap break-words">{inv.terms}</p>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">Terms & Conditions</h3>
+                  <p className="text-slate-600 whitespace-pre-wrap break-words">{inv.terms}</p>
                 </div>
               )}
             </div>
@@ -593,14 +598,14 @@ export default function PublicInvoicePage() {
         )}
 
         {/* Footer */}
-        <div className="text-center py-8">
-          <div className="flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 mb-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+        <div className="text-center py-8 motion-safe:animate-fade-in-up motion-safe:[animation-delay:420ms] motion-safe:[animation-fill-mode:backwards]">
+          <div className="flex items-center justify-center gap-2 text-slate-600 mb-2">
+            <div className="w-8 h-8 bg-front-gradient rounded-lg flex items-center justify-center transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-lg">
               <FileText className="w-4 h-4 text-white" />
             </div>
             <span className="font-semibold">Powered by Invoicy</span>
           </div>
-          <p className="text-sm text-slate-400 dark:text-slate-500">Professional invoicing made simple</p>
+          <p className="text-sm text-slate-500">Professional invoicing made simple</p>
         </div>
       </div>
     </div>

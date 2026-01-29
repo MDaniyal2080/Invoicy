@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import apiClient from '@/lib/api-client'
 import Link from 'next/link'
 import { useAuthStore } from '@/lib/stores/auth-store'
 import { useUIStore } from '@/lib/stores/ui-store'
+import { FrontInfoCallout, FrontPageShell, FrontPalette } from '@/components/ui/front-page-shell'
+import { SiteBrand } from '@/components/ui/site-brand'
 
 export default function VerifyEmailByTokenPage() {
   const router = useRouter()
@@ -181,59 +182,43 @@ export default function VerifyEmailByTokenPage() {
   }, [token, router, addNotification])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900">
-      <div className="flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-indigo-500 to-emerald-500">
-              <svg
-                className="h-10 w-10 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-              Invoicy
-            </h1>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Modern Invoice Management Platform
-            </p>
-          </div>
-          <Card className="border-0 shadow-2xl">
-            <CardHeader className="space-y-1 text-center">
-              {status === 'loading' && (
-                <Loader2 className="h-12 w-12 text-primary mx-auto animate-spin" />
-              )}
-              {status === 'success' && (
-                <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto" />
-              )}
-              {status === 'error' && (
-                <XCircle className="h-12 w-12 text-red-600 mx-auto" />
-              )}
-              <CardTitle className="text-2xl font-bold">Verify Email</CardTitle>
-              <CardDescription>{message || 'Verifying your email, please wait...'}</CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              {status === 'success' && (
-                <p className="text-sm text-muted-foreground">You can now sign in to your account.</p>
-              )}
-            </CardContent>
-            <CardFooter className="justify-center">
-              <Link href="/login">
-                <Button>Go to Sign in</Button>
-              </Link>
-            </CardFooter>
-          </Card>
+    <FrontPageShell title={<SiteBrand />} description="Tech-Forward Dark Mode">
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold">Verify Email</h2>
+          <p className="text-sm text-slate-600">{message || 'Verifying your email, please wait...'}</p>
         </div>
+
+        <FrontPalette />
+
+        <FrontInfoCallout>
+          <div className="space-y-1">
+            <div className="font-semibold">Font: Space Grotesk (Modern, tech feel)</div>
+            <div className="font-semibold">Best for: Tech companies, modern startups</div>
+          </div>
+        </FrontInfoCallout>
+
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 flex items-center gap-3">
+          {status === 'loading' ? (
+            <Loader2 className="h-5 w-5 animate-spin text-slate-700" />
+          ) : status === 'success' ? (
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+          ) : (
+            <XCircle className="h-5 w-5 text-red-600" />
+          )}
+          <span>
+            {status === 'success'
+              ? 'Email verified successfully. You can now sign in.'
+              : status === 'error'
+                ? 'We could not verify your email. The link may be invalid or expired.'
+                : 'Working on it…'}
+          </span>
+        </div>
+
+        <Link href="/login">
+          <Button className="w-full h-11 bg-[#0f0c29] hover:bg-[#302b63] text-white">Go to Sign in</Button>
+        </Link>
       </div>
-    </div>
+    </FrontPageShell>
   )
 }

@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Eye, EyeOff, Loader2, Mail } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuthStore } from '@/lib/stores/auth-store'
 import { toast } from 'sonner'
+import { FrontInfoCallout, FrontPageShell, FrontPalette } from '@/components/ui/front-page-shell'
+import { SiteBrand } from '@/components/ui/site-brand'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -48,19 +49,27 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="glass-card hover-lift animate-fade-in-up max-w-md mx-auto">
-      <CardHeader className="space-y-3 text-center">
-        <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-glow mb-4">
-          <Mail className="h-8 w-8 text-white" />
+    <FrontPageShell
+      title={<SiteBrand />}
+      description="Tech-Forward Dark Mode"
+    >
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold">Welcome back</h2>
+          <p className="text-sm text-slate-600">Enter your credentials to access your account.</p>
         </div>
-        <CardTitle className="text-3xl font-bold text-gradient">Welcome back</CardTitle>
-        <CardDescription className="text-lg">
-          Enter your credentials to access your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-3">
+
+        <FrontPalette />
+
+        <FrontInfoCallout>
+          <div className="space-y-1">
+            <div className="font-semibold">Font: Space Grotesk (Modern, tech feel)</div>
+            <div className="font-semibold">Best for: Tech companies, modern startups</div>
+          </div>
+        </FrontInfoCallout>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-semibold">Email Address</Label>
             <Input
               id="email"
@@ -70,23 +79,24 @@ export default function LoginPage() {
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
               disabled={isLoading}
-              className="h-12 text-base border-2 focus:border-primary/50 transition-all duration-200"
+              className="h-11"
             />
             {error && (
-              <p className="text-sm text-destructive mt-2 animate-fade-in">{error}</p>
+              <p className="text-sm text-destructive">{error}</p>
             )}
           </div>
-          <div className="space-y-3">
+
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password" className="text-sm font-semibold">Password</Label>
               <Link
                 href="/forgot-password"
-                className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+                className="text-sm text-slate-700 hover:text-slate-900 underline-offset-4 hover:underline"
               >
                 Forgot password?
               </Link>
             </div>
-            <div className="relative group">
+            <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
@@ -95,12 +105,12 @@ export default function LoginPage() {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
                 disabled={isLoading}
-                className="h-12 text-base pr-12 border-2 focus:border-primary/50 transition-all duration-200"
+                className="h-11 pr-12"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted/50"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800 transition-colors"
                 disabled={isLoading}
               >
                 {showPassword ? (
@@ -111,25 +121,24 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
+
           <div className="flex items-center space-x-3">
             <input
               type="checkbox"
               id="remember"
               checked={formData.rememberMe}
               onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
-              className="h-5 w-5 rounded-lg border-2 border-border text-primary focus:ring-primary/20 focus:ring-2 transition-all"
+              className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
               disabled={isLoading}
             />
-            <Label
-              htmlFor="remember"
-              className="text-sm font-medium cursor-pointer select-none"
-            >
+            <Label htmlFor="remember" className="text-sm font-medium cursor-pointer select-none">
               Remember me for 30 days
             </Label>
           </div>
+
           <Button
             type="submit"
-            className="w-full h-12 text-base font-semibold hover-lift"
+            className="w-full h-11 bg-[#0f0c29] hover:bg-[#302b63] text-white"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -138,23 +147,19 @@ export default function LoginPage() {
                 Signing in...
               </>
             ) : (
-              'Sign in to your account'
+              'Sign in'
             )}
           </Button>
         </form>
-      </CardContent>
-      <CardFooter className="flex flex-col space-y-3 pt-6">
-        <div className="text-center">
-          <span className="text-muted-foreground">Don't have an account? </span>
-          <Link 
-            href="/register" 
-            className="text-primary hover:text-primary/80 font-semibold transition-colors hover:underline"
-          >
-            Sign up for free
+
+        <div className="text-center text-sm">
+          <span className="text-slate-600">Don't have an account? </span>
+          <Link href="/register" className="text-slate-900 font-semibold underline-offset-4 hover:underline">
+            Sign up
           </Link>
         </div>
-      </CardFooter>
-    </Card>
+      </div>
+    </FrontPageShell>
   )
 }
 

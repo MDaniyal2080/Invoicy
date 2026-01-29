@@ -1,12 +1,16 @@
 import { Loader2 } from 'lucide-react'
+import { FrontPageShell } from '@/components/ui/front-page-shell'
+import { SiteBrand } from '@/components/ui/site-brand'
 
 export default function Loading() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900">
-      <div className="flex items-center gap-3 rounded-lg bg-white/90 dark:bg-gray-900/90 px-4 py-3 shadow-lg ring-1 ring-black/5">
-        <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
-        <span className="text-sm text-gray-700 dark:text-gray-200">Loading…</span>
+    <FrontPageShell title={<SiteBrand />} description="Tech-Forward Dark Mode">
+      <div className="flex items-center justify-center">
+        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
+          <Loader2 className="h-5 w-5 animate-spin text-slate-700" />
+          <span className="text-sm text-slate-700">Loading…</span>
+        </div>
       </div>
-    </div>
+    </FrontPageShell>
   )
 }

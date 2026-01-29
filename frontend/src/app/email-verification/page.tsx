@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Mail, RefreshCw, LogOut } from 'lucide-react'
 import apiClient from '@/lib/api-client'
 import { useUIStore } from '@/lib/stores'
 import { useAuthStore } from '@/lib/stores/auth-store'
 import { getErrorMessage } from '@/lib/utils'
+import { FrontInfoCallout, FrontPageShell, FrontPalette } from '@/components/ui/front-page-shell'
+import { SiteBrand } from '@/components/ui/site-brand'
 
 export default function EmailVerificationPage() {
   const router = useRouter()
@@ -125,84 +126,80 @@ export default function EmailVerificationPage() {
   // Don't early-return null so the token-handling effect can run even when user is null
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-emerald-50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-4 bg-indigo-100 rounded-full">
-              <Mail className="h-12 w-12 text-indigo-600" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold">Verify Your Email</CardTitle>
-          <CardDescription className="text-center">
-            We&apos;ve sent a verification link to <strong>{user?.email || 'your email address'}</strong>
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent className="space-y-6">
-          <div className="text-center space-y-2">
-            <p className="text-sm text-gray-600">
-              Please check your inbox and click the verification link to access your dashboard.
-            </p>
-            <p className="text-xs text-gray-500">
-              Don&apos;t forget to check your spam folder if you don&apos;t see the email.
-            </p>
-          </div>
+    <FrontPageShell title={<SiteBrand />} description="Tech-Forward Dark Mode">
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold">Verify your email</h2>
+          <p className="text-sm text-slate-600">
+            We&apos;ve sent a verification link to <span className="font-semibold text-slate-900">{user?.email || 'your email address'}</span>
+          </p>
+        </div>
 
-          <div className="space-y-3">
-            {user?.emailVerified && (
-              <Button
-                onClick={() => router.push('/dashboard?fromVerify=1')}
-                className="w-full bg-gradient-to-r from-emerald-500 to-indigo-500 hover:from-emerald-600 hover:to-indigo-600"
-              >
-                Continue to Dashboard
-              </Button>
+        <FrontPalette />
+
+        <FrontInfoCallout>
+          <div className="space-y-1">
+            <div className="font-semibold">Font: Space Grotesk (Modern, tech feel)</div>
+            <div className="font-semibold">Best for: Tech companies, modern startups</div>
+          </div>
+        </FrontInfoCallout>
+
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          <div>Please check your inbox and click the verification link to access your dashboard.</div>
+          <div className="mt-1 text-xs text-slate-600">Don&apos;t forget to check your spam folder.</div>
+        </div>
+
+        <div className="space-y-3">
+          {user?.emailVerified && (
+            <Button
+              onClick={() => router.push('/dashboard?fromVerify=1')}
+              className="w-full h-11 bg-[#0f0c29] hover:bg-[#302b63] text-white"
+            >
+              Continue to Dashboard
+            </Button>
+          )}
+          <Button
+            onClick={handleResendVerification}
+            disabled={resending || countdown > 0}
+            className="w-full h-11 bg-[#0f0c29] hover:bg-[#302b63] text-white"
+          >
+            {resending ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Sending...
+              </>
+            ) : countdown > 0 ? (
+              `Resend in ${countdown}s`
+            ) : (
+              <>
+                <Mail className="h-4 w-4 mr-2" />
+                Resend Verification Email
+              </>
             )}
-            <Button
-              onClick={handleResendVerification}
-              disabled={resending || countdown > 0}
-              className="w-full bg-gradient-to-r from-indigo-500 to-emerald-500 hover:from-indigo-600 hover:to-emerald-600"
-            >
-              {resending ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Sending...
-                </>
-              ) : countdown > 0 ? (
-                `Resend in ${countdown}s`
-              ) : (
-                <>
-                  <Mail className="h-4 w-4 mr-2" />
-                  Resend Verification Email
-                </>
-              )}
-            </Button>
+          </Button>
 
-            <Button
-              variant="secondary"
-              onClick={handleIHaveVerified}
-              className="w-full"
-            >
-              I&apos;ve verified my email
-            </Button>
-            
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="w-full"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
+          <Button
+            variant="secondary"
+            onClick={handleIHaveVerified}
+            className="w-full h-11"
+          >
+            I&apos;ve verified my email
+          </Button>
 
-          <div className="text-center">
-            <p className="text-xs text-gray-500">
-              Having trouble? Contact support for assistance.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          <Button
+            variant="outline"
+            onClick={handleLogout}
+            className="w-full h-11"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
+
+        <div className="text-center">
+          <p className="text-xs text-slate-600">Having trouble? Contact support for assistance.</p>
+        </div>
+      </div>
+    </FrontPageShell>
   )
 }

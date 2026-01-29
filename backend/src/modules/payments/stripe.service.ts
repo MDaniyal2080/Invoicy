@@ -51,7 +51,9 @@ export class StripeService {
   }
 
   private getFrontendUrl(): string {
-    // Prefer configured FRONTEND_ORIGINS first value, else default to localhost:3000
+    const appUrl = (process.env.APP_URL || '').trim();
+    if (appUrl) return appUrl;
+
     const origins = (process.env.FRONTEND_ORIGINS || '')
       .split(',')
       .map((s) => s.trim())
